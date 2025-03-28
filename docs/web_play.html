@@ -147,6 +147,10 @@ import asyncio
 import js
 from pyodide.ffi import create_proxy
 
+# Create pygame module globally since it doesn't exist in Pyodide
+sys.modules['pygame'] = type('pygame', (), {})
+pygame = sys.modules['pygame']
+
 # Create a simple pygame-like API that will render to the canvas
 class PygameWeb:
     def __init__(self):

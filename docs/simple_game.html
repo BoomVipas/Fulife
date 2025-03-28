@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FULIFE - Browser Version</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #header {
+            background-color: #35424a;
+            color: white;
+            width: 100%;
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        #game-container {
+            width: 800px;
+            height: 600px;
+            position: relative;
+            background-color: black;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #controls {
+            margin-top: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .control-key {
+            display: inline-block;
+            background-color: #35424a;
+            color: white;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 3px;
+        }
+        .dialog {
+            position: absolute;
+            background: white;
+            border: 2px solid black;
+            padding: 15px;
+            width: 400px;
+            top: 150px;
+            left: 200px;
+            display: none;
+        }
+        .dialog h3 {
+            margin-top: 0;
+        }
+        .dialog-controls {
+            text-align: right;
+            margin-top: 10px;
+        }
+        .btn {
+            display: inline-block;
+            background: #35424a;
+            color: #fff;
+            padding: 5px 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>FULIFE Game</h1>
+        <p>A life simulation game where you build your career and life</p>
+    </div>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="dialogBox" class="dialog">
+            <h3 id="npcName"></h3>
+            <p id="dialogText"></p>
+            <div class="dialog-controls">
+                <button class="btn" onclick="closeDialog()">Close (E)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <h3>Controls:</h3>
+        <div><span class="control-key">WASD</span> or <span class="control-key">Arrow Keys</span> to move</div>
+        <div><span class="control-key">E</span> to interact with NPCs</div>
+        <div><span class="control-key">I</span> to open inventory</div>
+    </div>
+
+    <script>
+        // Game constants
+        const PLAYER_SIZE = 40;
+        const PLAYER_SPEED = 3;
+        const NPC_WIDTH = 30;
+        const NPC_HEIGHT = 50;
+        const INTERACTION_RANGE = 50;
+        
+        // Game state
+        let gameState = "playing"; // "playing" or "dialogue"
+        let interactingWith = null;
+        
+        // Canvas and context
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Dialog elements
+        const dialogBox = document.getElementById('dialogBox');
+        const npcNameElement = document.getElementById('npcName');
+        const dialogTextElement = document.getElementById('dialogText');
+        
+        // Game objects
+        const player = {
+            x: canvas.width / 2 - PLAYER_SIZE / 2,
+            y: canvas.height / 2 - PLAYER_SIZE / 2,
+            width: PLAYER_SIZE,
+            height: PLAYER_SIZE,
+            speed: PLAYER_SPEED,
+            color: '#3498db'
+        };
+        
+        const npcs = [
+            { x: 200, y: 200, width: NPC_WIDTH, height: NPC_HEIGHT, color: '#2ecc71', name: 'Career Advisor', message: 'Welcome to FuLife! I can help you explore career options.' },
+            { x: 600, y: 300, width: NPC_WIDTH, height: NPC_HEIGHT, color: '#3498db', name: 'Education Mentor', message: 'Education is key to success. Let me guide you.' },
+            { x: 400, y: 450, width: NPC_WIDTH, height: NPC_HEIGHT, color: '#e74c3c', name: 'Life Coach', message: 'Balance in life is important. Let\'s discuss your goals.' }
+        ];
+        
+        const obstacles = [
+            // Wall borders
+            { x: 0, y: 0, width: canvas.width, height: 20, color: '#ffffff' },
+            { x: 0, y: 0, width: 20, height: canvas.height, color: '#ffffff' },
+            { x: 0, y: canvas.height - 20, width: canvas.width, height: 20, color: '#ffffff' },
+            { x: canvas.width - 20, y: 0, width: 20, height: canvas.height, color: '#ffffff' },
+            
+            // Furniture
+            { x: 100, y: 100, width: 80, height: 60, color: '#ffffff' },
+            { x: 300, y: 200, width: 60, height: 60, color: '#ffffff' },
+            { x: 600, y: 150, width: 100, height: 40, color: '#ffffff' }
+        ];
+        
+        // Movement flags
+        const keys = {
+            left: false,
+            right: false,
+            up: false,
+            down: false
+        };
+        
+        // Event listeners for keyboard input
+        window.addEventListener('keydown', function(e) {
+            if (gameState === "playing") {
+                switch(e.key) {
+                    case 'ArrowLeft':
+                    case 'a':
+                        keys.left = true;
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                        keys.right = true;
+                        break;
+                    case 'ArrowUp':
+                    case 'w':
+                        keys.up = true;
+                        break;
+                    case 'ArrowDown':
+                    case 's':
+                        keys.down = true;
+                        break;
+                    case 'e':
+                    case 'E':
+                        const npc = getInteractableNPC();
+                        if (npc) {
+                            startDialog(npc);
+                        }
+                        break;
+                    case 'i':
+                    case 'I':
+                        // Placeholder for inventory
+                        console.log("Inventory would open here");
+                        break;
+                }
+            } else if (gameState === "dialogue") {
+                if (e.key === 'e' || e.key === 'E') {
+                    closeDialog();
+                }
+            }
+        });
+        
+        window.addEventListener('keyup', function(e) {
+            switch(e.key) {
+                case 'ArrowLeft':
+                case 'a':
+                    keys.left = false;
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                    keys.right = false;
+                    break;
+                case 'ArrowUp':
+                case 'w':
+                    keys.up = false;
+                    break;
+                case 'ArrowDown':
+                case 's':
+                    keys.down = false;
+                    break;
+            }
+        });
+        
+        // Helper functions
+        function drawRect(x, y, width, height, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, width, height);
+        }
+        
+        function drawText(text, x, y, color = '#ffffff', size = 16) {
+            ctx.fillStyle = color;
+            ctx.font = `${size}px Arial`;
+            ctx.fillText(text, x, y);
+        }
+        
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+        
+        function getInteractableNPC() {
+            for (const npc of npcs) {
+                const dx = Math.abs((player.x + player.width/2) - (npc.x + npc.width/2));
+                const dy = Math.abs((player.y + player.height/2) - (npc.y + npc.height/2));
+                if (dx < INTERACTION_RANGE && dy < INTERACTION_RANGE) {
+                    return npc;
+                }
+            }
+            return null;
+        }
+        
+        function startDialog(npc) {
+            gameState = "dialogue";
+            interactingWith = npc;
+            npcNameElement.textContent = npc.name;
+            dialogTextElement.textContent = npc.message;
+            dialogBox.style.display = 'block';
+        }
+        
+        function closeDialog() {
+            gameState = "playing";
+            interactingWith = null;
+            dialogBox.style.display = 'none';
+        }
+        
+        // Game loop
+        function update() {
+            if (gameState === "playing") {
+                // Store previous position for collision detection
+                const prevX = player.x;
+                const prevY = player.y;
+                
+                // Update player position based on keyboard input
+                if (keys.left) player.x -= player.speed;
+                if (keys.right) player.x += player.speed;
+                if (keys.up) player.y -= player.speed;
+                if (keys.down) player.y += player.speed;
+                
+                // Check for collisions with obstacles
+                let collided = false;
+                for (const obstacle of obstacles) {
+                    if (checkCollision(
+                        {x: player.x, y: player.y, width: player.width, height: player.height},
+                        obstacle
+                    )) {
+                        collided = true;
+                        break;
+                    }
+                }
+                
+                // If collision occurred, revert to previous position
+                if (collided) {
+                    player.x = prevX;
+                    player.y = prevY;
+                }
+            }
+        }
+        
+        function render() {
+            // Clear canvas
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw obstacles
+            for (const obstacle of obstacles) {
+                drawRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height, obstacle.color);
+            }
+            
+            // Draw NPCs
+            for (const npc of npcs) {
+                drawRect(npc.x, npc.y, npc.width, npc.height, npc.color);
+                drawText(npc.name, npc.x - 10, npc.y - 10);
+            }
+            
+            // Draw player
+            drawRect(player.x, player.y, player.width, player.height, player.color);
+            
+            // Draw interaction hint if near NPC
+            if (gameState === "playing") {
+                const npc = getInteractableNPC();
+                if (npc) {
+                    drawText(`Press E to talk to ${npc.name}`, 10, 30);
+                }
+            }
+            
+            // Draw game instructions
+            if (gameState === "playing") {
+                drawText("WASD/Arrows: Move, E: Interact, I: Inventory", 10, canvas.height - 10);
+            }
+        }
+        
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start the game
+        gameLoop();
+    </script>
+</body>
+</html> 
