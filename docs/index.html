@@ -3,130 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FULIFE Game</title>
+    <title>FULIFE - Career Simulation Game</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
+            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            background-color: #f5f5f5;
             color: #333;
+            line-height: 1.6;
         }
+        
         .container {
-            width: 80%;
+            width: 85%;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0 20px;
         }
+        
         header {
-            background: #35424a;
-            color: #ffffff;
+            background-color: #35424a;
+            color: white;
             padding: 30px 0;
             text-align: center;
         }
+        
         header h1 {
             margin: 0;
+            font-size: 2.5em;
         }
-        section {
-            padding: 20px;
-            margin: 20px 0;
-            background: #fff;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        
+        header p {
+            margin: 10px 0 0;
+            font-size: 1.2em;
         }
-        h2 {
-            color: #35424a;
+        
+        .hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1533750446969-255bbf191920?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-align: center;
+            padding: 100px 0;
         }
+        
+        .hero h2 {
+            font-size: 2.2em;
+            margin: 0 0 20px;
+        }
+        
+        .hero p {
+            font-size: 1.2em;
+            max-width: 700px;
+            margin: 0 auto 30px;
+        }
+        
         .btn {
             display: inline-block;
-            background: #35424a;
-            color: #fff;
-            padding: 10px 20px;
-            margin: 10px 0;
+            background: #e74c3c;
+            color: white;
             text-decoration: none;
+            padding: 12px 30px;
             border-radius: 5px;
             font-weight: bold;
+            font-size: 1.1em;
+            transition: background 0.3s;
         }
+        
         .btn:hover {
-            background: #29353d;
+            background: #c0392b;
         }
-        .btn-primary {
-            background: #3498db;
-        }
-        .btn-primary:hover {
-            background: #2980b9;
-        }
-        .download-section {
+        
+        .features {
+            padding: 60px 0;
             text-align: center;
-            padding: 30px 0;
         }
-        .controls {
-            margin: 20px 0;
+        
+        .features h2 {
+            font-size: 2em;
+            margin-bottom: 40px;
         }
-        .controls ul {
-            list-style-type: none;
-            padding: 0;
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
         }
-        .controls li {
-            padding: 5px 0;
+        
+        .feature-item {
+            background: white;
+            padding: 30px;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
         }
-        .button-group {
+        
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        
+        .how-to-play {
+            background-color: #eef5ff;
+            padding: 60px 0;
+        }
+        
+        .how-to-play h2 {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 40px;
+        }
+        
+        .steps {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .step {
+            display: flex;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: #35424a;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             display: flex;
             justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        
+        .cta {
+            text-align: center;
+            padding: 80px 0;
+        }
+        
+        .cta h2 {
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+        
+        footer {
+            background: #35424a;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .hero {
+                padding: 60px 0;
+            }
+            
+            .hero h2 {
+                font-size: 1.8em;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .step {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .step-number {
+                margin: 0 0 15px 0;
+            }
         }
     </style>
 </head>
 <body>
     <header>
         <div class="container">
-            <h1>FULIFE Game</h1>
-            <p>A life simulation game where you build your career and life</p>
+            <h1>FULIFE</h1>
+            <p>Build Your Dream Career and Life</p>
         </div>
     </header>
-
-    <div class="container">
-        <section class="download-section">
-            <h2>Play The Game</h2>
-            <p>Choose how you want to play FULIFE:</p>
-            
-            <div class="button-group">
-                <a href="simple_game.html" class="btn btn-primary">Play in Browser</a>
-                <a href="web_play.html" class="btn">Try Python Version</a>
-                <a href="fulife_game.zip" class="btn" download>Download Game</a>
+    
+    <section class="hero">
+        <div class="container">
+            <h2>Your Life, Your Choices, Your Future</h2>
+            <p>FULIFE is a career and life simulation game where your decisions shape your future. Make choices about education, career paths, relationships, and more to build the life you want.</p>
+            <a href="fulife.html" class="btn">Play Now</a>
+        </div>
+    </section>
+    
+    <section class="features">
+        <div class="container">
+            <h2>Game Features</h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">🎓</div>
+                    <h3>Education Paths</h3>
+                    <p>Choose different education paths that will open up various career opportunities.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">💼</div>
+                    <h3>Career Progression</h3>
+                    <p>Start from entry-level positions and work your way up to executive roles.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🏠</div>
+                    <h3>Life Management</h3>
+                    <p>Balance work, relationships, health, and happiness to create a fulfilling life.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🛒</div>
+                    <h3>Resource Management</h3>
+                    <p>Manage your money, time, and skills to achieve your goals efficiently.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Dynamic Events</h3>
+                    <p>Face random events and challenges that test your decision-making abilities.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🏆</div>
+                    <h3>Achievement System</h3>
+                    <p>Unlock achievements and milestones as you progress through your virtual life.</p>
+                </div>
             </div>
-        </section>
-
-        <section>
-            <h2>About The Game</h2>
-            <p>Fulife is a simulation game where you can experience different career paths and life choices. Talk to NPCs, make decisions, and see where your virtual life takes you!</p>
-        </section>
-
-        <section>
-            <h2>Installation Instructions (for downloaded version)</h2>
-            <ol>
-                <li>Download and extract the game package</li>
-                <li>Make sure you have Python 3.8+ installed</li>
-                <li>Install Pygame: <code>pip install pygame</code></li>
-                <li>Run the game: <code>python main.py</code></li>
-            </ol>
-        </section>
-
-        <section class="controls">
-            <h2>Game Controls</h2>
-            <ul>
-                <li><strong>WASD or Arrow Keys:</strong> Move your character</li>
-                <li><strong>E:</strong> Interact with NPCs and objects</li>
-                <li><strong>I:</strong> Open inventory</li>
-            </ul>
-        </section>
-
-        <section>
-            <h2>Source Code</h2>
-            <p>The source code for this game is available on GitHub:</p>
-            <a href="https://github.com/BoomVipas/Fulife" class="btn" target="_blank">View on GitHub</a>
-        </section>
-    </div>
+        </div>
+    </section>
+    
+    <section class="how-to-play">
+        <div class="container">
+            <h2>How to Play</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Move Around</h3>
+                        <p>Use WASD or Arrow Keys to navigate through the game world. Mobile players can use the on-screen controls.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Interact with NPCs</h3>
+                        <p>Press E (or the action button on mobile) to talk to characters and access different opportunities.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Manage Your Inventory</h3>
+                        <p>Press I to open your inventory and check your stats, items, and progress.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Make Decisions</h3>
+                        <p>Choose your educational path, career moves, and life decisions that will shape your future.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="cta">
+        <div class="container">
+            <h2>Ready to Build Your Virtual Life?</h2>
+            <a href="fulife.html" class="btn">Start Playing Now</a>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 FULIFE - A Career Simulation Game</p>
+        </div>
+    </footer>
 </body>
 </html>
