@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FULIFE - Play in Browser</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #header {
+            background-color: #35424a;
+            color: white;
+            width: 100%;
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        #loading {
+            font-size: 24px;
+            margin: 20px;
+            padding: 20px;
+            text-align: center;
+        }
+        #game-container {
+            display: none;
+            width: 800px;
+            height: 600px;
+            background-color: black;
+            position: relative;
+        }
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #controls {
+            margin-top: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .control-key {
+            display: inline-block;
+            background-color: #35424a;
+            color: white;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 3px;
+        }
+        #error {
+            color: red;
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid red;
+            background-color: #ffeeee;
+            display: none;
+            max-width: 800px;
+            text-align: center;
+        }
+        #alternative {
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            background-color: white;
+            display: none;
+            max-width: 800px;
+            text-align: center;
+        }
+        .btn {
+            display: inline-block;
+            background: #35424a;
+            color: #fff;
+            padding: 10px 20px;
+            margin: 10px 0;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>FULIFE Game</h1>
+        <p>A life simulation game where you build your career and life</p>
+    </div>
+
+    <div id="loading">
+        Loading Python environment... This may take a moment.
+        <div>
+            <progress id="progress" value="0" max="100"></progress>
+            <span id="progress-text">0%</span>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
+
+    <div id="controls">
+        <h3>Controls:</h3>
+        <div><span class="control-key">WASD</span> or <span class="control-key">Arrow Keys</span> to move</div>
+        <div><span class="control-key">E</span> to interact with NPCs</div>
+        <div><span class="control-key">I</span> to open inventory</div>
+    </div>
+
+    <div id="error">
+        <h3>Sorry, there was an error loading the game in the browser</h3>
+        <p id="error-message"></p>
+        <p>This could be due to browser compatibility issues or limitations of running Pygame in a web environment.</p>
+    </div>
+
+    <div id="alternative">
+        <h3>Unable to run the game directly in the browser</h3>
+        <p>Pygame has limited browser support. Please download the game to play on your computer.</p>
+        <a href="fulife_game.zip" class="btn" download>Download Game Package</a>
+    </div>
+
+    <script type="text/javascript">
+        const loadingElement = document.getElementById('loading');
+        const gameContainer = document.getElementById('game-container');
+        const errorElement = document.getElementById('error');
+        const alternativeElement = document.getElementById('alternative');
+        const progressBar = document.getElementById('progress');
+        const progressText = document.getElementById('progress-text');
+
+        // Update progress during loading
+        function updateProgress(value) {
+            progressBar.value = value;
+            progressText.textContent = `${value}%`;
+        }
+
+        // Simplified Pygame stub code for the browser
+        const pygameStub = `
+import sys
+import asyncio
+import js
+from pyodide.ffi import create_proxy
+
+# Create a simple pygame-like API that will render to the canvas
+class PygameWeb:
+    def __init__(self):
+        self.canvas = js.document.getElementById('canvas')
+        self.ctx = self.canvas.getContext('2d')
+        self.width = 800
+        self.height = 600
+        self.keys_pressed = set()
+        self.running = True
+        self.clock = Clock()
+        
+        # Setup event listeners
+        document = js.document
+        window = js.window
+        
+        def keydown(event):
+            self.keys_pressed.add(event.key)
+        
+        def keyup(event):
+            if event.key in self.keys_pressed:
+                self.keys_pressed.remove(event.key)
+        
+        self.keydown_proxy = create_proxy(keydown)
+        self.keyup_proxy = create_proxy(keyup)
+        
+        document.addEventListener('keydown', self.keydown_proxy)
+        document.addEventListener('keyup', self.keyup_proxy)
+    
+    def init(self):
+        return self
+    
+    def display(self):
+        return Display(self)
+    
+    def font(self):
+        return Font(self)
+    
+    def time(self):
+        return self.clock
+    
+    def event(self):
+        return Event(self)
+    
+    def key(self):
+        return Key()
+    
+    def draw(self):
+        return Draw(self)
+    
+    def image(self):
+        return Image(self)
+    
+    def mixer(self):
+        return Mixer()
+    
+    def quit(self):
+        js.document.removeEventListener('keydown', self.keydown_proxy)
+        js.document.removeEventListener('keyup', self.keyup_proxy)
+        self.running = False
+
+class Display:
+    def __init__(self, pygame):
+        self.pygame = pygame
+        
+    def set_mode(self, size, *args, **kwargs):
+        return Surface(self.pygame, size)
+    
+    def set_caption(self, caption):
+        js.document.title = caption
+    
+    def flip(self):
+        pass
+
+class Surface:
+    def __init__(self, pygame, size=(0, 0)):
+        self.pygame = pygame
+        self.width = size[0]
+        self.height = size[1]
+        self.ctx = self.pygame.ctx
+    
+    def fill(self, color):
+        self.ctx.fillStyle = f'rgb({color[0]}, {color[1]}, {color[2]})'
+        self.ctx.fillRect(0, 0, self.width, self.height)
+    
+    def blit(self, surface, dest):
+        # In a real implementation, this would copy pixels
+        pass
+
+class Rect:
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+    
+    def colliderect(self, other):
+        return (self.x < other.x + other.width and
+                self.x + self.width > other.x and
+                self.y < other.y + other.height and
+                self.y + self.height > other.y)
+
+class Font:
+    def __init__(self, pygame):
+        self.pygame = pygame
+    
+    def init(self):
+        pass
+    
+    def SysFont(self, name, size):
+        return SysFont(self.pygame, name, size)
+
+class SysFont:
+    def __init__(self, pygame, name, size):
+        self.pygame = pygame
+        self.name = name
+        self.size = size
+    
+    def render(self, text, antialias, color):
+        # Create a surface with the rendered text
+        self.pygame.ctx.font = f'{self.size}px {self.name}'
+        self.pygame.ctx.fillStyle = f'rgb({color[0]}, {color[1]}, {color[2]})'
+        self.pygame.ctx.fillText(text, 10, 50)
+        return Surface(self.pygame)
+
+class Event:
+    def __init__(self, pygame):
+        self.pygame = pygame
+        self.QUIT = 'quit'
+        self.KEYDOWN = 'keydown'
+        self.KEYUP = 'keyup'
+    
+    def get(self):
+        events = []
+        # Simple simulation of quit event
+        if not self.pygame.running:
+            class QuitEvent:
+                def __init__(self):
+                    self.type = 'quit'
+            events.append(QuitEvent())
+        return events
+
+class Key:
+    def __init__(self):
+        self.K_UP = 'ArrowUp'
+        self.K_DOWN = 'ArrowDown'
+        self.K_LEFT = 'ArrowLeft'
+        self.K_RIGHT = 'ArrowRight'
+        self.K_ESCAPE = 'Escape'
+        self.K_w = 'w'
+        self.K_a = 'a'
+        self.K_s = 's'
+        self.K_d = 'd'
+        self.K_e = 'e'
+        self.K_i = 'i'
+
+class Clock:
+    def __init__(self):
+        self.last_tick = js.Date.now()
+    
+    def tick(self, fps):
+        current = js.Date.now()
+        delta = current - self.last_tick
+        target_delta = 1000 / fps
+        if delta < target_delta:
+            # We could sleep here, but browser doesn't allow precise sleep
+            pass
+        self.last_tick = current
+        return delta
+
+class Draw:
+    def __init__(self, pygame):
+        self.pygame = pygame
+    
+    def rect(self, surface, color, rect, width=0):
+        ctx = self.pygame.ctx
+        ctx.fillStyle = f'rgb({color[0]}, {color[1]}, {color[2]})'
+        if width == 0:
+            ctx.fillRect(rect.x, rect.y, rect.width, rect.height)
+        else:
+            ctx.strokeStyle = f'rgb({color[0]}, {color[1]}, {color[2]})'
+            ctx.lineWidth = width
+            ctx.strokeRect(rect.x, rect.y, rect.width, rect.height)
+    
+    def circle(self, surface, color, center, radius):
+        ctx = self.pygame.ctx
+        ctx.fillStyle = f'rgb({color[0]}, {color[1]}, {color[2]})'
+        ctx.beginPath()
+        ctx.arc(center[0], center[1], radius, 0, 2 * 3.14159)
+        ctx.fill()
+
+class Image:
+    def __init__(self, pygame):
+        self.pygame = pygame
+    
+    def load(self, path):
+        # In a real implementation, this would load an image
+        return Surface(self.pygame)
+
+class Mixer:
+    def __init__(self):
+        self.music = Music()
+
+class Music:
+    def __init__(self):
+        pass
+    
+    def load(self, path):
+        pass
+    
+    def play(self):
+        pass
+
+# Create the pygame instance
+pygame = PygameWeb()
+
+# Set up global symbols to mimic Pygame
+init = pygame.init
+display = pygame.display
+font = pygame.font
+time = pygame.time
+event = pygame.event
+key = pygame.key
+draw = pygame.draw
+image = pygame.image
+mixer = pygame.mixer
+quit = pygame.quit
+Rect = Rect
+        `
+
+        // Main game code for the simplified version
+        const gameCode = `
+import pygame
+import sys
+
+# Initialize pygame
+pygame.init()
+
+# Set up display
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("FULIFE")
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+
+# Player
+player_size = 40
+player_x = WIDTH // 2 - player_size // 2
+player_y = HEIGHT // 2 - player_size // 2
+player_speed = 3
+player_rect = pygame.Rect(player_x, player_y, player_size, player_size)
+
+# NPCs
+class NPC:
+    def __init__(self, x, y, color, name):
+        self.rect = pygame.Rect(x, y, 30, 50)
+        self.color = color
+        self.name = name
+
+npcs = [
+    NPC(200, 200, GREEN, "Career Advisor"),
+    NPC(600, 300, BLUE, "Education Mentor"),
+    NPC(400, 450, RED, "Life Coach")
+]
+
+# Obstacles (walls and furniture)
+obstacles = [
+    # Wall borders
+    pygame.Rect(0, 0, WIDTH, 20),
+    pygame.Rect(0, 0, 20, HEIGHT),
+    pygame.Rect(0, HEIGHT-20, WIDTH, 20),
+    pygame.Rect(WIDTH-20, 0, 20, HEIGHT),
+    
+    # Furniture
+    pygame.Rect(100, 100, 80, 60),
+    pygame.Rect(300, 200, 60, 60),
+    pygame.Rect(600, 150, 100, 40)
+]
+
+# Game states
+GAME_STATE = "playing"
+interacting_with = None
+
+# Font
+font = pygame.font.SysFont(None, 24)
+
+def draw_text(text, color, x, y):
+    """Draw text on screen"""
+    text_surface = font.render(text, True, color)
+    screen.blit(text_surface, (x, y))
+
+def check_collision(rect, obstacles):
+    """Check if player collides with any obstacle"""
+    for obstacle in obstacles:
+        if rect.colliderect(obstacle):
+            return True
+    return False
+
+def get_interactable_npc():
+    """Return NPC that player can interact with, if any"""
+    interaction_range = 50
+    for npc in npcs:
+        dx = abs(player_rect.x - npc.rect.x)
+        dy = abs(player_rect.y - npc.rect.y)
+        if dx < interaction_range and dy < interaction_range:
+            return npc
+    return None
+
+def show_dialogue(npc):
+    """Show dialogue for an NPC interaction"""
+    messages = {
+        "Career Advisor": "Welcome to FuLife! I can help you explore career options.",
+        "Education Mentor": "Education is key to success. Let me guide you.",
+        "Life Coach": "Balance in life is important. Let's discuss your goals."
+    }
+    
+    pygame.draw.rect(screen, WHITE, (WIDTH//4, HEIGHT//4, WIDTH//2, HEIGHT//4))
+    pygame.draw.rect(screen, BLACK, (WIDTH//4, HEIGHT//4, WIDTH//2, HEIGHT//4), 2)
+    
+    draw_text(npc.name, BLACK, WIDTH//4 + 10, HEIGHT//4 + 10)
+    draw_text(messages[npc.name], BLACK, WIDTH//4 + 10, HEIGHT//4 + 40)
+    draw_text("Press E to exit conversation", BLACK, WIDTH//4 + 10, HEIGHT//4 + 70)
+
+def main():
+    """Main game loop"""
+    global player_rect, GAME_STATE, interacting_with
+    
+    clock = pygame.time.Clock()
+    running = True
+    
+    # Movement flags
+    move_left = False
+    move_right = False
+    move_up = False
+    move_down = False
+    
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            
+            # Only handle movement inputs if not in dialogue
+            if GAME_STATE == "playing":
+                # Key press events
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        move_left = True
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        move_right = True
+                    if event.key == pygame.K_UP or event.key == pygame.K_w:
+                        move_up = True
+                    if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                        move_down = True
+                    
+                    # Check for NPC interaction with E key
+                    if event.key == pygame.K_e:
+                        npc = get_interactable_npc()
+                        if npc:
+                            GAME_STATE = "dialogue"
+                            interacting_with = npc
+                    
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+                
+                # Key release events
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        move_left = False
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        move_right = False
+                    if event.key == pygame.K_UP or event.key == pygame.K_w:
+                        move_up = False
+                    if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                        move_down = False
+            
+            # Handle dialogue state inputs
+            elif GAME_STATE == "dialogue":
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_e:
+                        GAME_STATE = "playing"
+                        interacting_with = None
+        
+        # Update player position if in playing state
+        if GAME_STATE == "playing":
+            # Store previous position for collision detection
+            prev_x, prev_y = player_rect.x, player_rect.y
+            
+            # Calculate new position
+            if move_left:
+                player_rect.x -= player_speed
+            if move_right:
+                player_rect.x += player_speed
+            if move_up:
+                player_rect.y -= player_speed
+            if move_down:
+                player_rect.y += player_speed
+            
+            # Check for collisions and revert position if collision occurs
+            if check_collision(player_rect, obstacles):
+                player_rect.x = prev_x
+                player_rect.y = prev_y
+        
+        # Clear screen
+        screen.fill(BLACK)
+        
+        # Draw obstacles
+        for obstacle in obstacles:
+            pygame.draw.rect(screen, WHITE, obstacle)
+        
+        # Draw NPCs
+        for npc in npcs:
+            pygame.draw.rect(screen, npc.color, npc.rect)
+            # Draw NPC name above them
+            draw_text(npc.name, WHITE, npc.rect.x - 10, npc.rect.y - 20)
+        
+        # Draw player
+        pygame.draw.rect(screen, BLUE, player_rect)
+        
+        # Show interaction hint if near NPC
+        if GAME_STATE == "playing":
+            npc = get_interactable_npc()
+            if npc:
+                draw_text("Press E to talk to " + npc.name, WHITE, 10, 10)
+        
+        # Show dialogue if in dialogue state
+        if GAME_STATE == "dialogue" and interacting_with:
+            show_dialogue(interacting_with)
+        
+        # Draw instructions
+        if GAME_STATE == "playing":
+            draw_text("WASD/Arrows: Move, E: Interact, ESC: Quit", WHITE, 10, HEIGHT - 30)
+        
+        # Update display
+        pygame.display.flip()
+        
+        # Cap framerate
+        clock.tick(60)
+
+if __name__ == "__main__":
+    main()
+    pygame.quit()
+    sys.exit()
+        `
+
+        async function main() {
+            let pyodide;
+            try {
+                // Load Pyodide and packages
+                updateProgress(10);
+                pyodide = await loadPyodide();
+                updateProgress(50);
+                
+                // Install micropip to load third-party packages
+                await pyodide.loadPackagesFromImports(`
+                    import sys
+                    import asyncio
+                `);
+                updateProgress(80);
+                
+                // Load the Pygame stub
+                await pyodide.runPythonAsync(pygameStub);
+                updateProgress(90);
+                
+                // Run the game
+                await pyodide.runPythonAsync(gameCode);
+                updateProgress(100);
+                
+                // Hide loading, show game
+                loadingElement.style.display = 'none';
+                gameContainer.style.display = 'block';
+                
+            } catch (error) {
+                console.error("Error:", error);
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+                alternativeElement.style.display = 'block';
+                document.getElementById('error-message').textContent = error.toString();
+            }
+        }
+
+        // Start loading when the page is ready
+        window.onload = () => {
+            main();
+        };
+    </script>
+</body>
+</html> 

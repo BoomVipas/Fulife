@@ -50,6 +50,12 @@
         .btn:hover {
             background: #29353d;
         }
+        .btn-primary {
+            background: #3498db;
+        }
+        .btn-primary:hover {
+            background: #2980b9;
+        }
         .download-section {
             text-align: center;
             padding: 30px 0;
@@ -64,6 +70,12 @@
         .controls li {
             padding: 5px 0;
         }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -75,19 +87,23 @@
     </header>
 
     <div class="container">
+        <section class="download-section">
+            <h2>Play The Game</h2>
+            <p>Choose how you want to play FULIFE:</p>
+            
+            <div class="button-group">
+                <a href="web_play.html" class="btn btn-primary">Play in Browser</a>
+                <a href="fulife_game.zip" class="btn" download>Download Game</a>
+            </div>
+        </section>
+
         <section>
             <h2>About The Game</h2>
             <p>Fulife is a simulation game where you can experience different career paths and life choices. Talk to NPCs, make decisions, and see where your virtual life takes you!</p>
         </section>
 
-        <section class="download-section">
-            <h2>Play The Game</h2>
-            <p>Download the game package and follow the instructions below to play.</p>
-            <a href="fulife_game.zip" class="btn" download>Download Game Package</a>
-        </section>
-
         <section>
-            <h2>Installation Instructions</h2>
+            <h2>Installation Instructions (for downloaded version)</h2>
             <ol>
                 <li>Download and extract the game package</li>
                 <li>Make sure you have Python 3.8+ installed</li>
