@@ -3,53 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fulife: Career Simulation Game</title>
+    <title>FULIFE - Game</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background-color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: white;
+            background-color: #111;
+            color: #fff;
             font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
-        #game-container {
+        h1 {
+            margin-bottom: 20px;
+        }
+        #canvas-container {
             width: 800px;
             height: 600px;
+            margin: 0 auto;
             position: relative;
+            overflow: hidden;
         }
         canvas {
-            border: 2px solid #555;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            display: block;
+            margin: 0 auto;
         }
-        #loading {
+        p {
+            margin: 10px 0;
+            max-width: 800px;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .loading {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            text-align: center;
+            font-size: 24px;
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="loading">
-            <h2>Loading Fulife...</h2>
-            <p>Please wait while the game loads.</p>
-        </div>
+    <h1>FULIFE</h1>
+    <div id="canvas-container">
+        <div class="loading">Loading... Please wait</div>
         <!-- Pygbag will insert the canvas here -->
     </div>
-
-    <script>
-        window.addEventListener('load', function() {
-            // Wait for pygbag to load the game
-            setTimeout(function() {
-                document.getElementById('loading').style.display = 'none';
-            }, 5000);
-        });
+    <p>
+        Controls: Use WASD or Arrow keys to move, E to interact with NPCs, I to open inventory.
+    </p>
+    <p>
+        Game loading may take a moment. If it doesn't load, make sure your browser supports WebAssembly.
+    </p>
+    <script type="module">
+        // Pygbag will handle the loading of the game
+        // This is just a placeholder for now
     </script>
 </body>
 </html> 

@@ -149,21 +149,7 @@ class GameScene(BaseScene):
         self.player.handle_input()
         
         # Check collisions with obstacles
-        for obstacle in self.obstacles:
-            if self.player.rect.colliderect(obstacle):
-                # Move player back
-                if self.player.facing == 'up':
-                    self.player.y += self.player.velocity
-                elif self.player.facing == 'down':
-                    self.player.y -= self.player.velocity
-                elif self.player.facing == 'left':
-                    self.player.x += self.player.velocity
-                elif self.player.facing == 'right':
-                    self.player.x -= self.player.velocity
-                
-                # Update player rectangle
-                self.player.rect.x = self.player.x
-                self.player.rect.y = self.player.y
+        self.player.check_collision(self.obstacles)
         
         # Update NPCs
         for npc in self.npcs:
