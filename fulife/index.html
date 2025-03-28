@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fulife: Career Simulation Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            width: 800px;
+            height: 600px;
+            position: relative;
+        }
+        canvas {
+            border: 2px solid #555;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="loading">
+            <h2>Loading Fulife...</h2>
+            <p>Please wait while the game loads.</p>
+        </div>
+        <!-- Pygbag will insert the canvas here -->
+    </div>
+
+    <script>
+        window.addEventListener('load', function() {
+            // Wait for pygbag to load the game
+            setTimeout(function() {
+                document.getElementById('loading').style.display = 'none';
+            }, 5000);
+        });
+    </script>
+</body>
+</html> 
