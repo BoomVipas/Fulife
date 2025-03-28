@@ -1,49 +1,68 @@
 #!/usr/bin/env python3
 """
-Simple script to run Pygbag and serve the game in a web browser
+Simple HTTP server to test the web version of FULIFE locally.
 """
 
 import os
 import sys
 import subprocess
+import http.server
+import socketserver
 import webbrowser
+from pathlib import Path
 
-if __name__ == "__main__":
-    print("Starting Pygbag web server...")
+# Port for the local server
+PORT = 8000
+
+def check_web_build():
+    """Check if the web build exists and build it if not."""
     
-    try:
-        # Run pygbag with the server directly (no build step)
-        process = subprocess.Popen([
-            sys.executable, "-m", "pygbag", "--ume_block=0", 
-            "--title", "Fulife: Career Simulation Game", 
-            "--app_name", "fulife", 
-            "main.py"
-        ])
-        
-        # Open the browser after a short delay
-        import time
-        time.sleep(3)  # Give pygbag time to start
-        
-        # Open the default browser
-        webbrowser.open("http://localhost:8000")
-        
-        print("Web server running at http://localhost:8000")
+    build_dir = Path("build/web")
+    if not build_dir.exists() or not list(build_dir.glob("*")):
+        print("Web build not found, running build_web.py first...")
+        try:
+            subprocess.run(["python", "build_web.py"], check=True)
+            return True
+        except subprocess.CalledProcessError:
+            print("Failed to build web version.")
+            return False
+    return True
+
+def serve_web():
+    """Serve the web build locally."""
+    
+    build_dir = Path("build/web")
+    
+    # Change directory to the build directory
+    os.chdir(build_dir)
+    
+    # Custom HTTP request handler
+    class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+        def end_headers(self):
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
+            self.send_header("Cross-Origin-Opener-Policy", "same-origin")
+            super().end_headers()
+    
+    # Create and configure the HTTP server
+    handler = CustomHTTPRequestHandler
+    with socketserver.TCPServer(("", PORT), handler) as httpd:
+        url = f"http://localhost:{PORT}"
+        print(f"Serving FULIFE web version at {url}")
         print("Press Ctrl+C to stop the server.")
         
-        # Wait for the process to complete (or be interrupted)
-        process.wait()
-    
-    except KeyboardInterrupt:
-        print("\nStopping web server...")
-        # Try to terminate the process gracefully
-        process.terminate()
+        # Open the browser
+        webbrowser.open(url)
+        
+        # Start the server
         try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            # If it doesn't terminate in time, kill it
-            process.kill()
-        print("Web server stopped.")
-    
-    except Exception as e:
-        print(f"Error: {e}")
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\nServer stopped.")
+
+if __name__ == "__main__":
+    if check_web_build():
+        serve_web()
+    else:
+        print("Cannot serve web version. Build process failed.")
         sys.exit(1) 
