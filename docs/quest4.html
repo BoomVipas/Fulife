@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My House</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+ 
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: black;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background-color: black;
+    }
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fce2a6;
+      color: black;
+      padding: 20px 30px;
+      border-radius: 20px;
+      border: 4px solid #964B00;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      text-align: center;
+      z-index: 10;
+      display: none;
+      width: 250px;
+      box-shadow: 4px 4px 0 #000;
+    }
+    #popup button {
+      margin: 10px 6px 0;
+      padding: 6px 16px;
+      background: white;
+      border: 2px solid #964B00;
+      border-radius: 12px;
+      font-size: 10px;
+      font-family: 'Press Start 2P', monospace;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    
+    #popup button:hover {
+      background-color: #f9d67a;
+    }
+
+    #controls-info {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      color: white;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 5px;
+      border-radius: 5px;
+      display: none; /* Hide the controls info */
+    }
+
+    /* Dialog box styles */
+    #dialog-box {
+      position: fixed;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffcc79;
+      color: black;
+      padding: 20px 30px;
+      border-radius: 20px;
+      border: 4px solid #964b00;
+      font-family: "Press Start 2P", monospace;
+      font-size: 10px;
+      text-align: left;
+      z-index: 10;
+      display: none;
+      width: 70%;
+      max-width: 600px;
+      min-width: 400px; /* Prevents box from getting too small */
+      height: 90px; /* Fixed height */
+      box-shadow: 4px 4px 0 #000;
+      overflow-y: auto; /* Adds scrolling if text is too long */
+    }
+
+    #dialog-content {
+      margin-bottom: 20px;
+      line-height: 1.5;
+      height: 60px; /* Fixed height for content area */
+      overflow-y: auto; /* Scrollable content if it's too long */
+    }
+
+    #dialog-portrait {
+      position: absolute;
+      right: 20px;
+      top: 40px;
+      width: 80px;
+      height: 80px;
+    }
+
+    #dialog-name {
+      position: absolute;
+      right: 20px;
+      top: 110px;
+      color: #964b00;
+    }
+
+    #next-hint {
+      text-align: center;
+      padding-left: 40%;
+      color: #964b00;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- 🔔 POPUP BOX -->
+  <div id="popup">
+    <p>Explore the building?</p>
+    <button onclick="leaveHouse()">Yes</button>
+    <button onclick="closePopup()">No</button>
+  </div>
+
+  <!-- Dialog Box -->
+  <div id="dialog-box">
+    <div id="dialog-content">
+      Welcome to FULIFE! I'm the CEO. Press any key to continue.
+    </div>
+    <img id="dialog-portrait" src="images/CEO_face.svg" alt="CEO Portrait">
+    <div id="dialog-name">CEO</div>
+    <div id="next-hint">Click to continue</div>
+  </div>
+
+  <div id="controls-info">
+    Movement: Arrow Keys or WASD<br>
+    Toggle Collision View: C<br>
+    Interact: E
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const floorplanWidth = 800;
+    const floorplanHeight = 600;
+
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    const playerScale = 1.5;
+    let popupVisible = false;
+    let showCollisions = false; // Start with collisions hidden
+    
+    // Add these offset constants for hitbox alignment
+    const PLAYER_HITBOX_OFFSET_X = -8;       // Adjust as needed
+    const PLAYER_HITBOX_OFFSET_Y = -26;      // Adjust as needed
+    const PLAYER_HITBOX_WIDTH = 20;         // Adjust as needed
+    const PLAYER_HITBOX_HEIGHT = 30;        // Adjust as needed
+
+    // Dialog elements and state
+    const dialogBox = document.getElementById("dialog-box");
+    const dialogContent = document.getElementById("dialog-content");
+    const dialogPortrait = document.getElementById("dialog-portrait");
+    const dialogName = document.getElementById("dialog-name");
+    let isDialogActive = false;
+    let currentDialog = 0;
+    let dialogCompleted = false;
+    let ceoMoving = false;
+    let ceoDestX = 460; // Destination X position for CEO after dialogue
+
+    // CEO NPC position
+    const npc = {
+      x: 460,
+      y: 415,
+      width: 50,
+      height: 70
+    };
+
+    // CEO collision offset and size adjustment
+    const CEO_COLLISION_OFFSET_X = 28;  // This puts collision at x=515 initially
+    const CEO_COLLISION_OFFSET_Y = -70;  // Negative values move collision up/left
+    const CEO_COLLISION_WIDTH = 60;      // Width of collision area
+    const CEO_COLLISION_HEIGHT = 60;     // Height of collision area
+    let collisionOffsetY = -100; // Start with collision already moved up
+
+    // Create a CEO collision area object
+    const ceoCollisionArea = {
+      get x() { return npc.x + CEO_COLLISION_OFFSET_X; },
+      get y() { return npc.y + CEO_COLLISION_OFFSET_Y + collisionOffsetY; },
+      get width() { return CEO_COLLISION_WIDTH; },
+      get height() { return CEO_COLLISION_HEIGHT; }
+    };
+
+    // Example collision areas - replace with your own
+    const doorArea = { x: 490, y: 350, width: 50, height: 50 };
+    let doorTriggered = false;
+
+    // Add more collision areas as needed
+    const collisionAreas = [
+      //top apth
+      { x: 0, y: 10, width: 700, height: 20 },  // Top path
+      { x: 0, y: 95, width: 140, height: 40 },  // bottom path
+      { x: 270, y: 0, width: 10, height: 150 },  // right path
+
+      //stairs
+      { x: 130, y: 135, width: 40, height: 180 },  // stair wall
+      { x: 215, y: 135, width: 100, height: 180 },  // stair wall
+      
+      //arcade wall
+      { x: 0, y: 250, width:150, height: 180 },  // arcade wall
+      //engineering building
+      { x: 300, y: 210, width:800, height: 180 },  // engineering building
+      { x: 580, y: 240, width:800, height: 180 },  // bush
+
+      { x: 260, y: 400, width:20, height: 20 },  // bin
+      
+      { x: 780, y: 50, width: 20, height: 500 }, // Right wall
+      { x: 110, y: 530, width: 800, height: 20 }, // Bottom wall
+      { x: 0, y: 490, width: 300, height: 50 }, // Bottom wall
+      { x: 0, y: 460, width: 130, height: 30 }, // Bottom wall
+      { x: 0, y: 430, width: 10, height: 50 }, // Bottom wall
+      
+      // Door area is not included in collision areas
+    ];
+
+    let player = {
+      x: 460, // Position player in front of CEO
+      y: 460, // A bit below the CEO
+      speed: 2,
+      direction: "up", // Face toward the CEO
+      isMoving: false,
+      width: PLAYER_HITBOX_WIDTH,
+      height: PLAYER_HITBOX_HEIGHT
+    };
+
+    // Dialog sequences
+    const dialogSequences = [
+      {
+        text: "Welcome to FULIFE! I'm the CEO of this company.",
+        portrait: "images/CEO_face.svg",
+        name: "CEO"
+      },
+      {
+        text: "We are looking for talented individuals like you to join our team.",
+        portrait: "images/CEO_face.svg",
+        name: "CEO"
+      },
+      {
+        text: "Feel free to explore the building and come back to me if you have any questions.",
+        portrait: "images/CEO_face.svg",
+        name: "CEO"
+      }
+    ];
+
+    function isColliding(x, y) {
+      // Apply hitbox offset to collision detection
+      const hitboxX = x + PLAYER_HITBOX_OFFSET_X;
+      const hitboxY = y + PLAYER_HITBOX_OFFSET_Y;
+      
+      // First check static collision areas
+      if (collisionAreas.some(area =>
+        hitboxX < area.x + area.width &&
+        hitboxX + player.width > area.x &&
+        hitboxY < area.y + area.height &&
+        hitboxY + player.height > area.y
+      )) {
+        return true;
+      }
+      
+      // Then check CEO collision
+      return (
+        hitboxX < ceoCollisionArea.x + ceoCollisionArea.width &&
+        hitboxX + player.width > ceoCollisionArea.x &&
+        hitboxY < ceoCollisionArea.y + ceoCollisionArea.height &&
+        hitboxY + player.height > ceoCollisionArea.y
+      );
+    }
+
+    function isTouchingDoor(x, y) {
+      // Apply hitbox offset to door detection
+      const hitboxX = x + PLAYER_HITBOX_OFFSET_X;
+      const hitboxY = y + PLAYER_HITBOX_OFFSET_Y;
+      
+      const a = doorArea;
+      return (
+        hitboxX < a.x + a.width &&
+        hitboxX + player.width > a.x &&
+        hitboxY < a.y + a.height &&
+        hitboxY + player.height > a.y
+      );
+    }
+
+    // Distance check for NPC interaction
+    function isNearNPC() {
+      const dx = player.x - npc.x;
+      const dy = player.y - npc.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return distance < 60;
+    }
+
+    document.addEventListener("keydown", e => {
+      keys[e.key] = true;
+      
+      // Toggle collision visibility with 'C' key
+      if (e.key.toLowerCase() === 'c') {
+        showCollisions = !showCollisions;
+        console.log("Collision visibility:", showCollisions ? "ON" : "OFF");
+      }
+      
+      // E key for interaction with NPC
+      if (e.key === 'e' && isNearNPC() && !isDialogActive && !popupVisible) {
+        startDialog();
+      }
+      
+      // Space or Enter to advance dialog
+      if ((e.key === " " || e.key === "Enter") && isDialogActive) {
+        advanceDialog();
+      }
+    });
+    
+    document.addEventListener("keyup", e => keys[e.key] = false);
+
+    // Click handler for dialog and interaction
+    canvas.addEventListener("click", () => {
+      if (isDialogActive) {
+        advanceDialog();
+      } else if (isNearNPC() && !popupVisible) {
+        startDialog();
+      }
+    });
+
+    function update() {
+      if (isDialogActive || popupVisible) return; // freeze when dialog or popup is showing
+      
+      player.isMoving = false;
+
+      let proposedX = player.x;
+      let proposedY = player.y;
+
+      if (keys["ArrowUp"] || keys["w"] || keys["W"]) {
+        proposedY -= player.speed;
+        player.direction = "up";
+        player.isMoving = true;
+      }
+      if (keys["ArrowDown"] || keys["s"] || keys["S"]) {
+        proposedY += player.speed;
+        player.direction = "down";
+        player.isMoving = true;
+      }
+      if (keys["ArrowLeft"] || keys["a"] || keys["A"]) {
+        proposedX -= player.speed;
+        player.direction = "left";
+        player.isMoving = true;
+      }
+      if (keys["ArrowRight"] || keys["d"] || keys["D"]) {
+        proposedX += player.speed;
+        player.direction = "right";
+        player.isMoving = true;
+      }
+
+      if (isTouchingDoor(proposedX, proposedY)) {
+        if (!doorTriggered) {
+          doorTriggered = true;
+          showPopup();
+        }
+      } else {
+        doorTriggered = false;
+      }
+
+      if (!isColliding(proposedX, proposedY)) {
+        player.x = proposedX;
+        player.y = proposedY;
+      }
+
+      // Animation logic
+      if (player.isMoving) {
+        frameDelay++;
+        if (frameDelay > 8) {
+          frame = (frame + 1) % 3;
+          frameDelay = 0;
+        }
+      } else {
+        frame = 1; // Use middle frame when standing still
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw the background map
+      ctx.drawImage(
+        background,
+        offsetX,
+        offsetY,
+        floorplanWidth * scale,
+        floorplanHeight * scale
+      );
+
+      // Draw collision areas if enabled
+      if (showCollisions) {
+        ctx.save();
+        ctx.globalAlpha = 0.4; // Make the collision areas semi-transparent
+        
+        collisionAreas.forEach(area => {
+          ctx.fillStyle = 'red';
+          
+          ctx.fillRect(
+            offsetX + area.x * scale, 
+            offsetY + area.y * scale,
+            area.width * scale,
+            area.height * scale
+          );
+        });
+        
+        // Draw doorArea with green color
+        ctx.fillStyle = 'green';
+        ctx.fillRect(
+          offsetX + doorArea.x * scale, 
+          offsetY + doorArea.y * scale,
+          doorArea.width * scale,
+          doorArea.height * scale
+        );
+        
+        // Draw CEO collision area in blue
+        ctx.fillStyle = 'rgba(0, 100, 255, 0.4)';
+        ctx.fillRect(
+          offsetX + ceoCollisionArea.x * scale,
+          offsetY + ceoCollisionArea.y * scale,
+          ceoCollisionArea.width * scale,
+          ceoCollisionArea.height * scale
+        );
+        
+        ctx.restore(); // Restore normal opacity
+      }
+
+      // Draw the CEO NPC
+      const npcDrawX = offsetX + npc.x * scale - (npc.width * scale) / 2;
+      const npcDrawY = offsetY + npc.y * scale - npc.height * scale;
+
+      ctx.drawImage(
+        npcSprite,
+        npcDrawX,
+        npcDrawY,
+        npc.width * scale,
+        npc.height * scale
+      );
+
+      // Draw the player sprite
+      const frameWidth = playerSprite.width / 3;
+      const frameHeight = playerSprite.height / 4;
+
+      let row = 0;
+      switch (player.direction) {
+        case "down": row = 0; break;
+        case "up": row = 1; break;
+        case "right": row = 2; break;
+        case "left": row = 3; break;
+      }
+
+      const drawWidth = frameWidth * scale * playerScale;
+      const drawHeight = frameHeight * scale * playerScale;
+
+      const drawX = offsetX + player.x * scale - drawWidth / 2;
+      const drawY = offsetY + player.y * scale - drawHeight + 10;
+
+      ctx.drawImage(
+        playerSprite,
+        frame * frameWidth,
+        row * frameHeight,
+        frameWidth,
+        frameHeight,
+        drawX,
+        drawY,
+        drawWidth,
+        drawHeight
+      );
+
+      // Draw player collision hitbox with offset
+      if (showCollisions) {
+        ctx.strokeStyle = 'blue';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(
+          offsetX + (player.x + PLAYER_HITBOX_OFFSET_X) * scale,
+          offsetY + (player.y + PLAYER_HITBOX_OFFSET_Y) * scale,
+          player.width * scale,
+          player.height * scale
+        );
+        
+        // Draw reference point at player's base position
+        ctx.fillStyle = 'yellow';
+        ctx.beginPath();
+        ctx.arc(offsetX + player.x * scale, offsetY + player.y * scale, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw interaction prompt if near NPC
+      if (isNearNPC() && !isDialogActive && !popupVisible) {
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "10px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          "Press 'E' ",
+          offsetX + npc.x * scale,
+          offsetY + (npc.y - 50) * scale
+        );
+      }
+
+      // Draw debug info
+      if (location.hash === "#debug" || showCollisions) {
+        ctx.fillStyle = "white";
+        ctx.font = "14px Arial";
+        ctx.fillText(`Player: ${Math.round(player.x)},${Math.round(player.y)}`, 10, 20);
+        ctx.fillText(`Frame: ${frame}, Direction: ${player.direction}`, 10, 40);
+        ctx.fillText(`Collisions: ${showCollisions ? "VISIBLE" : "HIDDEN"}`, 10, 60);
+        ctx.fillText(`Hitbox: X:${PLAYER_HITBOX_OFFSET_X} Y:${PLAYER_HITBOX_OFFSET_Y} W:${PLAYER_HITBOX_WIDTH} H:${PLAYER_HITBOX_HEIGHT}`, 10, 80);
+        ctx.fillText(`CEO Hitbox: X:${CEO_COLLISION_OFFSET_X} Y:${CEO_COLLISION_OFFSET_Y + collisionOffsetY} W:${CEO_COLLISION_WIDTH} H:${CEO_COLLISION_HEIGHT}`, 10, 100);
+      }
+    }
+
+    // Start dialog sequence
+    function startDialog() {
+      isDialogActive = true;
+      currentDialog = 0;
+      showDialog(dialogSequences[currentDialog]);
+    }
+
+    // Show dialog
+    function showDialog(dialog) {
+      dialogContent.textContent = dialog.text;
+      dialogPortrait.src = dialog.portrait;
+      dialogName.textContent = dialog.name;
+      dialogBox.style.display = "block";
+    }
+
+    // Advance to next dialog
+    function advanceDialog() {
+      currentDialog++;
+
+      if (currentDialog >= dialogSequences.length) {
+        // End of dialog
+        dialogBox.style.display = "none";
+        isDialogActive = false;
+        dialogCompleted = true;
+      } else {
+        // Show next dialog
+        showDialog(dialogSequences[currentDialog]);
+      }
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Get player name from URL
+    function getPlayerName() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get("name") || "Player";
+    }
+
+    function startGameWhenReady() {
+      if (background.complete && playerSprite.complete && npcSprite.complete) {
+        gameLoop();
+      } else {
+        setTimeout(startGameWhenReady, 100);
+      }
+    }
+
+    function showPopup() {
+      document.getElementById("popup").style.display = "block";
+      popupVisible = true;
+    }
+
+    function closePopup() {
+      document.getElementById("popup").style.display = "none";
+      popupVisible = false;
+    }
+
+    function leaveHouse() {
+      window.location.href = "game-page.html"; // Navigate back to main game
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      scale = Math.min(
+        canvas.width / floorplanWidth,
+        canvas.height / floorplanHeight
+      );
+
+      offsetX = (canvas.width - floorplanWidth * scale) / 2;
+      offsetY = (canvas.height - floorplanHeight * scale) / 2;
+    }
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    const background = new Image();
+    background.src = "images/map.png"; // Updated path to your map
+
+    const playerSprite = new Image();
+    playerSprite.src = "images/player_sprite.png"; // Updated path to your player sprite
+
+    const npcSprite = new Image();
+    npcSprite.src = "images/CEO_fullbody.png"; // CEO sprite
+
+    const keys = {};
+    let frame = 1;
+    let frameDelay = 0;
+
+    startGameWhenReady();
+  </script>
+</body>
+</html> 

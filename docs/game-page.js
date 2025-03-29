@@ -68,19 +68,67 @@ window.draw = function() {
     
     // Basic rendering if no other draw function exists
     if (window.ctx && window.canvas) {
-        // Clear the canvas
-        window.ctx.fillStyle = 'black';
-        window.ctx.fillRect(0, 0, window.GAME_WIDTH, window.GAME_HEIGHT);
+        // Clear the canvas with full transparency, don't fill with any color
+        window.ctx.clearRect(0, 0, window.GAME_WIDTH, window.GAME_HEIGHT);
         
         // Draw the player if it exists
         if (window.player) {
-            if (window.player.draw && typeof window.player.draw === 'function') {
-                window.player.draw();
-            } else {
-                // Fallback player drawing
-                window.ctx.fillStyle = window.player.color || 'white';
-                window.ctx.fillRect(window.player.x, window.player.y, window.player.width, window.player.height);
+            // Try to use the player's draw method
+            try {
+                if (window.player.draw && typeof window.player.draw === 'function') {
+                    window.player.draw();
+                } else {
+                    // Fallback player drawing - force a bright color and large size
+                    window.ctx.fillStyle = '#00FFFF';
+                    window.ctx.fillRect(window.player.x, window.player.y, window.player.width, window.player.height);
+                    
+                    // Add a border
+                    window.ctx.strokeStyle = 'black';
+                    window.ctx.lineWidth = 3;
+                    window.ctx.strokeRect(window.player.x, window.player.y, window.player.width, window.player.height);
+                    
+                    // Add player label
+                    window.ctx.fillStyle = 'white';
+                    window.ctx.strokeStyle = 'black';
+                    window.ctx.font = 'bold 16px Arial';
+                    window.ctx.textAlign = 'center';
+                    window.ctx.lineWidth = 2;
+                    window.ctx.strokeText('Player', window.player.x + window.player.width/2, window.player.y - 10);
+                    window.ctx.fillText('Player', window.player.x + window.player.width/2, window.player.y - 10);
+                }
+            } catch (error) {
+                // Emergency fallback - draw a character at a fixed position if all else fails
+                console.error("Error drawing player:", error);
+                window.ctx.fillStyle = '#FF00FF'; // Bright magenta for emergency visibility
+                window.ctx.fillRect(400, 300, 80, 80);
+                window.ctx.strokeStyle = 'black';
+                window.ctx.lineWidth = 3;
+                window.ctx.strokeRect(400, 300, 80, 80);
+                window.ctx.fillStyle = 'white';
+                window.ctx.font = 'bold 16px Arial';
+                window.ctx.textAlign = 'center';
+                window.ctx.fillText('PLAYER', 440, 290);
             }
+        } else {
+            // Emergency player object creation if it doesn't exist
+            console.error("Player object doesn't exist! Creating emergency player");
+            window.player = {
+                x: 400,
+                y: 300,
+                width: 80,
+                height: 80,
+                speed: 5,
+                facing: 'down'
+            };
+            window.ctx.fillStyle = '#FF00FF'; // Bright magenta for emergency visibility
+            window.ctx.fillRect(400, 300, 80, 80);
+            window.ctx.strokeStyle = 'black';
+            window.ctx.lineWidth = 3;
+            window.ctx.strokeRect(400, 300, 80, 80);
+            window.ctx.fillStyle = 'white';
+            window.ctx.font = 'bold 16px Arial';
+            window.ctx.textAlign = 'center';
+            window.ctx.fillText('EMERGENCY PLAYER', 440, 290);
         }
         
         // Draw NPCs if they exist
@@ -151,22 +199,22 @@ window.update = function(deltaTime) {
             }
             
             // Update player position
-            player.x += dx;
-            player.y += dy;
+            window.player.x += dx;
+            window.player.y += dy;
             
             // Set player facing direction
-            if (dx > 0) player.facing = "right";
-            else if (dx < 0) player.facing = "left";
-            if (dy > 0) player.facing = "down";
-            else if (dy < 0) player.facing = "up";
+            if (dx > 0) window.player.facing = "right";
+            else if (dx < 0) window.player.facing = "left";
+            if (dy > 0) window.player.facing = "down";
+            else if (dy < 0) window.player.facing = "up";
             
             // Keep player within bounds
-            player.x = Math.max(0, Math.min(window.GAME_WIDTH - player.width, player.x));
-            player.y = Math.max(0, Math.min(window.GAME_HEIGHT - player.height, player.y));
+            window.player.x = Math.max(0, Math.min(window.GAME_WIDTH - window.player.width, window.player.x));
+            window.player.y = Math.max(0, Math.min(window.GAME_HEIGHT - window.player.height, window.player.y));
             
             // Update player if it has an update method
-            if (player.update && typeof player.update === 'function') {
-                player.update(deltaTime);
+            if (window.player.update && typeof window.player.update === 'function') {
+                window.player.update(deltaTime);
             }
         }
         
@@ -784,9 +832,13 @@ function setupBasicGame() {
     // This would implement a very basic game if the full game.js implementation isn't available
     // Just enough to show something on screen
     
-    // Draw a message on the canvas
-    window.ctx.fillStyle = 'black';
-    window.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    // Clear the canvas with transparency instead of filling with black
+    window.ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    
+    // Draw a message on the canvas with a semi-transparent background for text readability
+    window.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    window.ctx.fillRect(GAME_WIDTH/2 - 300, GAME_HEIGHT/2 - 70, 600, 140);
+    
     window.ctx.fillStyle = 'white';
     window.ctx.font = '24px Arial';
     window.ctx.textAlign = 'center';
@@ -801,8 +853,9 @@ function setupBasicGame() {
     function basicAnimation() {
         // Simple animation to show the canvas is working
         const time = Date.now() / 1000;
-        window.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-        window.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        
+        // Use clearRect instead of filling with semi-transparent black
+        window.ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         
         // Draw a bouncing circle
         const x = GAME_WIDTH / 2 + Math.sin(time) * 100;

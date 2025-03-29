@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Map</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+ 
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: black;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background-color: black;
+    }
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fce2a6;
+      color: black;
+      padding: 20px 30px;
+      border-radius: 20px;
+      border: 4px solid #964B00;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      text-align: center;
+      z-index: 10;
+      display: none;
+      width: 250px;
+      box-shadow: 4px 4px 0 #000;
+    }
+    #popup button {
+      margin: 10px 6px 0;
+      padding: 6px 16px;
+      background: white;
+      border: 2px solid #964B00;
+      border-radius: 12px;
+      font-size: 10px;
+      font-family: 'Press Start 2P', monospace;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    
+    #popup button:hover {
+      background-color: #f9d67a;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- 🔔 POPUP BOX -->
+  <div id="popup">
+    <p>Go to the town?</p>
+    <button onclick="leaveHouse()">Yes</button>
+    <button onclick="closePopup()">No</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const floorplanWidth = 800;
+    const floorplanHeight = 600;
+
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    const playerScale = 1.8;
+    let popupVisible = false;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      scale = Math.min(
+        canvas.width / floorplanWidth,
+        canvas.height / floorplanHeight
+      );
+
+      offsetX = (canvas.width - floorplanWidth * scale) / 2;
+      offsetY = (canvas.height - floorplanHeight * scale) / 2;
+    }
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    const background = new Image();
+    background.src = "images/map.png"; // Updated path to your map
+
+    const playerSprite = new Image();
+    playerSprite.src = "images/player_sprite.png"; // Updated path to your player sprite
+
+    const keys = {};
+    let frame = 1;
+    let frameDelay = 0;
+
+    // Simplified door area - you can customize this
+    const doorArea = { x: 400, y: 500, width: 50, height: 50 };
+    let doorTriggered = false;
+
+    let player = {
+      x: floorplanWidth / 2,
+      y: floorplanHeight / 2,
+      speed: 2,
+      direction: "down",
+      isMoving: false
+    };
+    const collisionAreas = [
+      { x: 20, y: 50, width: 1100, height: 70 },
+      { x: 580, y: 20, width: 60, height: 260 },
+      { x: 580, y: 310, width: 60, height: 70 },
+      { x: 20, y: 340, width: 265, height: 70 },
+      doorArea, // 👈 still included in collision
+      { x: 20, y: 80, width: 205, height: 80 },
+      { x: 320, y: 340, width: 700, height: 70 },
+      { x: 20, y: 80, width: 45, height: 205 },
+      { x: 20, y: 80, width: 10, height: 300 },
+      { x: 930, y: 80, width: 10, height: 300 },
+      { x: 670, y: 80, width: 100, height: 110 },
+    ];
+    // Simplified placeholder for collision - you'll implement your own
+    function isColliding(x, y) {
+      const size = 20;
+      return collisionAreas.some(area =>
+        x < area.x + area.width &&
+        x + size > area.x &&
+        y < area.y + area.height &&
+        y + size > area.y
+      );
+    }
+
+    function isTouchingDoor(x, y) {
+      const size = 20;
+      const a = doorArea;
+      return (
+        x < a.x + a.width &&
+        x + size > a.x &&
+        y < a.y + a.height &&
+        y + size > a.y
+      );
+    }
+
+    document.addEventListener("keydown", e => keys[e.key] = true);
+    document.addEventListener("keyup", e => keys[e.key] = false);
+
+    function update() {
+      if (popupVisible) return; // freeze when popup is showing
+      player.isMoving = false;
+
+      let proposedX = player.x;
+      let proposedY = player.y;
+
+      if (keys["ArrowUp"] || keys["w"] || keys["W"]) {
+        proposedY -= player.speed;
+        player.direction = "up";
+        player.isMoving = true;
+      }
+      if (keys["ArrowDown"] || keys["s"] || keys["S"]) {
+        proposedY += player.speed;
+        player.direction = "down";
+        player.isMoving = true;
+      }
+      if (keys["ArrowLeft"] || keys["a"] || keys["A"]) {
+        proposedX -= player.speed;
+        player.direction = "left";
+        player.isMoving = true;
+      }
+      if (keys["ArrowRight"] || keys["d"] || keys["D"]) {
+        proposedX += player.speed;
+        player.direction = "right";
+        player.isMoving = true;
+      }
+
+      if (isTouchingDoor(proposedX, proposedY)) {
+        if (!doorTriggered) {
+          doorTriggered = true;
+          showPopup();
+        }
+      } else {
+        doorTriggered = false;
+      }
+
+      if (!isColliding(proposedX, proposedY)) {
+        player.x = proposedX;
+        player.y = proposedY;
+      }
+
+      // Animation logic
+      if (player.isMoving) {
+        frameDelay++;
+        if (frameDelay > 8) {
+          frame = (frame + 1) % 3;
+          frameDelay = 0;
+        }
+      } else {
+        frame = 1; // Use middle frame when standing still
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw the background map
+      ctx.drawImage(
+        background,
+        offsetX,
+        offsetY,
+        floorplanWidth * scale,
+        floorplanHeight * scale
+      );
+
+      // Draw the player sprite
+      const frameWidth = playerSprite.width / 3;
+      const frameHeight = playerSprite.height / 4;
+
+      let row = 0;
+      switch (player.direction) {
+        case "down": row = 0; break;
+        case "up": row = 1; break;
+        case "right": row = 2; break;
+        case "left": row = 3; break;
+      }
+
+      const drawWidth = frameWidth * scale * playerScale;
+      const drawHeight = frameHeight * scale * playerScale;
+
+      const drawX = offsetX + player.x * scale - drawWidth / 2;
+      const drawY = offsetY + player.y * scale - drawHeight + 10;
+
+      ctx.drawImage(
+        playerSprite,
+        frame * frameWidth,
+        row * frameHeight,
+        frameWidth,
+        frameHeight,
+        drawX,
+        drawY,
+        drawWidth,
+        drawHeight
+      );
+
+      // Draw debug info
+      if (location.hash === "#debug") {
+        ctx.fillStyle = "white";
+        ctx.font = "14px Arial";
+        ctx.fillText(`Player: ${Math.round(player.x)},${Math.round(player.y)}`, 10, 20);
+        ctx.fillText(`Frame: ${frame}, Direction: ${player.direction}`, 10, 40);
+      }
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function startGameWhenReady() {
+      if (background.complete && playerSprite.complete) {
+        gameLoop();
+      } else {
+        setTimeout(startGameWhenReady, 100);
+      }
+    }
+
+    function showPopup() {
+      document.getElementById("popup").style.display = "block";
+      popupVisible = true;
+    }
+
+    function closePopup() {
+      document.getElementById("popup").style.display = "none";
+      popupVisible = false;
+    }
+
+    function leaveHouse() {
+      window.location.href = "game-page.html"; // Navigate back to main game
+    }
+
+    startGameWhenReady();
+  </script>
+</body>
+</html> 

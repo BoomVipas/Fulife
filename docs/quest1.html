@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FULIFE - Quest 3</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: black;
+      font-family: "Press Start 2P", cursive;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background-color: black;
+    }
+
+    #dialog-box {
+      position: fixed;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffcc79;
+      color: black;
+      padding: 20px 30px;
+      border-radius: 20px;
+      border: 4px solid #964b00;
+      font-family: "Press Start 2P", monospace;
+      font-size: 10px;
+      text-align: left;
+      z-index: 10;
+      display: none;
+      width: 70%;
+      max-width: 600px;
+      min-width: 400px; /* Prevents box from getting too small */
+      height: 90px; /* Fixed height */
+      box-shadow: 4px 4px 0 #000;
+      overflow-y: auto; /* Adds scrolling if text is too long */
+    }
+
+    #dialog-content {
+      margin-bottom: 20px;
+      line-height: 1.5;
+      height: 60px; /* Fixed height for content area */
+      overflow-y: auto; /* Scrollable content if it's too long */
+    }
+
+    #dialog-portrait {
+      position: absolute;
+      right: 20px;
+      top: 40px;
+      width: 80px;
+      height: 80px;
+    }
+
+    #dialog-name {
+      position: absolute;
+      right: 20px;
+      top: 110px;
+      color: #964b00;
+    }
+
+    #next-hint {
+      text-align: center;
+      padding-left: 40%;
+      color: #964b00;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0% {
+        opacity: 0.3;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0.3;
+      }
+    }
+
+    .top-icons {
+      position: fixed;
+      top: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 30px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .sound-wrapper,
+    .setting-btn {
+      pointer-events: auto;
+    }
+
+    .sound-wrapper {
+      position: relative;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+    }
+
+    .sound-btn,
+    .mute-overlay {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      image-rendering: pixelated;
+      pointer-events: none;
+    }
+
+    .mute-overlay {
+      display: none;
+      transform: scale(0.8);
+      transform-origin: center;
+    }
+
+    .setting-btn {
+      width: 32px;
+      height: 32px;
+      image-rendering: pixelated;
+      cursor: pointer;
+    }
+
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fce2a6;
+      color: black;
+      padding: 20px 30px;
+      border-radius: 20px;
+      border: 4px solid #964b00;
+      font-family: "Press Start 2P", monospace;
+      font-size: 10px;
+      text-align: center;
+      z-index: 10;
+      display: none;
+      width: 250px;
+      box-shadow: 4px 4px 0 #000;
+    }
+
+    #popup button {
+      margin: 10px 6px 0;
+      padding: 6px 16px;
+      background: white;
+      border: 2px solid #964b00;
+      border-radius: 12px;
+      font-size: 10px;
+      font-family: "Press Start 2P", monospace;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    #popup button:hover {
+      background-color: #f9d67a;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Bar -->
+  <div class="top-icons">
+    <div class="sound-wrapper" onclick="toggleMusic(event)">
+      <img
+        id="sound-icon"
+        class="sound-btn"
+        src="images/sound_btn.png"
+        alt="Sound Icon"
+      />
+      <img
+        id="sound-mute-overlay"
+        class="mute-overlay"
+        src="images/sound_cross.png"
+        alt="Mute Overlay"
+      />
+    </div>
+    <img
+      class="setting-btn"
+      src="images/setting_btn.png"
+      alt="Settings Icon"
+      onclick="openSettings()"
+    />
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="dialog-box">
+    <div id="dialog-content">
+      Hi there! I'm the engineer. I can teach you about engineering careers!
+    </div>
+    <img
+      id="dialog-portrait"
+      src="images/engineer_closeup.svg"
+      alt="NPC Portrait"
+    />
+    <div id="dialog-name">Engineer</div>
+    <div id="next-hint">Click to continue</div>
+  </div>
+
+  <!-- Popup for leaving area -->
+  <div id="popup">
+    <p>Go to next the town?</p>
+    <button onclick="goToNextArea()">Yes</button>
+    <button onclick="closePopup()">No</button>
+  </div>
+
+  <!-- Background Music -->
+  <audio id="bg-music" loop preload="auto">
+    <source src="images/home_bg_music.mp3" type="audio/mpeg" />
+  </audio>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Game world dimensions
+    const worldWidth = 800;
+    const worldHeight = 600;
+
+    // Scaling and offsets for responsive design
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    // Dialog elements
+    const dialogBox = document.getElementById("dialog-box");
+    const dialogContent = document.getElementById("dialog-content");
+    const dialogPortrait = document.getElementById("dialog-portrait");
+    const dialogName = document.getElementById("dialog-name");
+
+    // Player settings
+    const playerScale = 1.5;
+    let isDialogActive = false;
+    let currentDialog = 0;
+    
+    // Player hitbox parameters
+    const PLAYER_HITBOX_OFFSET_X = -10;
+    const PLAYER_HITBOX_OFFSET_Y = -15;
+    const PLAYER_HITBOX_WIDTH = 20;
+    const PLAYER_HITBOX_HEIGHT = 20;
+
+    // Define exit area (top right)
+    const exitArea = {
+      x: worldWidth * 0.95,
+      y: worldHeight * 0.065,
+      width: worldWidth * 0.05,
+      height: worldHeight * 0.1,
+    };
+
+    let exitTriggered = false;
+    let popupVisible = false;
+    let showCollisions = false; // Hide collisions by default
+
+    // Dialog sequences
+    const dialogSequences = [
+      {
+        text: "Hello there! I'm the engineer for this area.",
+        portrait: "images/engineer_closeup.svg",
+        name: "Engineer",
+      },
+      {
+        text: "I just found out the CEO wants to meet with you. You should go to town to see him!",
+        portrait: "images/engineer_closeup.svg",
+        name: "Engineer",
+      },
+    ];
+
+    // Distance check for NPC interaction
+    function isNearNPC() {
+      const dx = player.x - npc.x;
+      const dy = player.y - npc.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return distance < 60;
+    }
+
+    // Collision detection
+    function isColliding(x, y) {
+      // Apply hitbox offset
+      const hitboxX = x + PLAYER_HITBOX_OFFSET_X;
+      const hitboxY = y + PLAYER_HITBOX_OFFSET_Y;
+      
+      return collisionAreas.some(area =>
+        hitboxX < area.x + area.width &&
+        hitboxX + PLAYER_HITBOX_WIDTH > area.x &&
+        hitboxY < area.y + area.height &&
+        hitboxY + PLAYER_HITBOX_HEIGHT > area.y
+      );
+    }
+
+    // Event listeners for keys
+    document.addEventListener("keydown", (e) => {
+      keys[e.key] = true;
+
+      // E key for interaction
+      if (e.key === "e" && isNearNPC() && !isDialogActive && !popupVisible) {
+        startDialog();
+      }
+
+      // Space or Enter to advance dialog
+      if ((e.key === " " || e.key === "Enter") && isDialogActive) {
+        advanceDialog();
+      }
+      
+      // Toggle collision visibility with 'C' key
+      if (e.key.toLowerCase() === 'c') {
+        showCollisions = !showCollisions;
+        console.log("Collision visibility:", showCollisions ? "ON" : "OFF");
+      }
+    });
+
+    document.addEventListener("keyup", (e) => (keys[e.key] = false));
+
+    // Click handler for dialog and interaction
+    canvas.addEventListener("click", () => {
+      if (isDialogActive) {
+        advanceDialog();
+      } else if (isNearNPC() && !popupVisible) {
+        startDialog();
+      }
+    });
+
+    // Update game state
+    function update() {
+      if (isDialogActive || popupVisible) return; // freeze when dialog or popup is showing
+
+      player.isMoving = false;
+
+      let proposedX = player.x;
+      let proposedY = player.y;
+
+      if (keys["ArrowUp"] || keys["w"]) {
+        proposedY -= player.speed;
+        player.direction = "up";
+        player.isMoving = true;
+      }
+      if (keys["ArrowDown"] || keys["s"]) {
+        proposedY += player.speed;
+        player.direction = "down";
+        player.isMoving = true;
+      }
+      if (keys["ArrowLeft"] || keys["a"]) {
+        proposedX -= player.speed;
+        player.direction = "left";
+        player.isMoving = true;
+      }
+      if (keys["ArrowRight"] || keys["d"]) {
+        proposedX += player.speed;
+        player.direction = "right";
+        player.isMoving = true;
+      }
+
+      // Check for collisions
+      if (!isColliding(proposedX, proposedY)) {
+        player.x = proposedX;
+        player.y = proposedY;
+      }
+
+      // Animation frame update
+      if (player.isMoving) {
+        frameDelay++;
+        if (frameDelay > 8) {
+          frame = (frame + 1) % 3;
+          frameDelay = 0;
+        }
+      } else {
+        frame = 1; // Default standing frame
+      }
+
+      // Check if player is in exit area
+      if (
+        player.x > exitArea.x &&
+        player.x < exitArea.x + exitArea.width &&
+        player.y > exitArea.y &&
+        player.y < exitArea.y + exitArea.height
+      ) {
+        if (!exitTriggered) {
+          exitTriggered = true;
+          showPopup();
+        }
+      } else {
+        exitTriggered = false;
+      }
+    }
+
+    // Draw the game
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw background
+      ctx.drawImage(
+        background,
+        offsetX,
+        offsetY,
+        worldWidth * scale,
+        worldHeight * scale
+      );
+      
+      // Draw collision areas if enabled
+      if (showCollisions) {
+        ctx.save();
+        ctx.globalAlpha = 0.4; // Make the collision areas semi-transparent
+        
+        collisionAreas.forEach(area => {
+          ctx.fillStyle = 'red'; // Walls are red
+          ctx.fillRect(
+            offsetX + area.x * scale, 
+            offsetY + area.y * scale,
+            area.width * scale,
+            area.height * scale
+          );
+        });
+        
+        // Draw exit area
+        ctx.fillStyle = 'green';
+        ctx.fillRect(
+          offsetX + exitArea.x * scale,
+          offsetY + exitArea.y * scale,
+          exitArea.width * scale,
+          exitArea.height * scale
+        );
+        
+        ctx.restore(); // Restore normal opacity
+      }
+
+      // Draw NPC
+      const npcDrawX = offsetX + npc.x * scale - (npc.width * scale) / 2;
+      const npcDrawY = offsetY + npc.y * scale - npc.height * scale;
+
+      ctx.drawImage(
+        npcSprite,
+        npcDrawX,
+        npcDrawY,
+        npc.width * 2,
+        npc.height * 2
+      );
+
+      // Draw player
+      const frameWidth = playerSprite.width / 3; // 3 columns
+      const frameHeight = playerSprite.height / 4; // 4 rows
+
+      let row = 0;
+      switch (player.direction) {
+        case "down":
+          row = 0;
+          break; // First row
+        case "up":
+          row = 1;
+          break; // Second row
+        case "right":
+          row = 2;
+          break; // Third row
+        case "left":
+          row = 3;
+          break; // Fourth row
+      }
+
+      const drawWidth = frameWidth * scale * playerScale;
+      const drawHeight = frameHeight * scale * playerScale;
+
+      const drawX = offsetX + player.x * scale - drawWidth / 2;
+      const drawY = offsetY + player.y * scale - drawHeight + 10;
+
+      ctx.drawImage(
+        playerSprite,
+        frame * frameWidth,
+        row * frameHeight,
+        frameWidth,
+        frameHeight,
+        drawX,
+        drawY,
+        drawWidth,
+        drawHeight
+      );
+
+      // Draw player collision hitbox
+      if (showCollisions) {
+        ctx.strokeStyle = 'blue';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(
+          offsetX + (player.x + PLAYER_HITBOX_OFFSET_X) * scale,
+          offsetY + (player.y + PLAYER_HITBOX_OFFSET_Y) * scale,
+          PLAYER_HITBOX_WIDTH * scale,
+          PLAYER_HITBOX_HEIGHT * scale
+        );
+        
+        // Draw reference point at player's base position
+        ctx.fillStyle = 'yellow';
+        ctx.beginPath();
+        ctx.arc(offsetX + player.x * scale, offsetY + player.y * scale, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw interaction prompt if near NPC
+      if (isNearNPC() && !isDialogActive && !popupVisible) {
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "10px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          "Press 'E' ",
+          offsetX + npc.x * scale,
+          offsetY + (npc.y - 50) * scale
+        );
+      }
+
+      // Draw exit area indicator
+      ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+      ctx.fillRect(
+        offsetX + exitArea.x * scale,
+        offsetY + exitArea.y * scale,
+        exitArea.width * scale,
+        exitArea.height * scale
+      );
+      
+      // Draw debug info
+      if (location.hash === "#debug" || showCollisions) {
+        ctx.fillStyle = "white";
+        ctx.font = "14px Arial";
+        ctx.fillText(`Player: ${Math.round(player.x)},${Math.round(player.y)}`, 10, 20);
+        ctx.fillText(`Frame: ${frame}, Direction: ${player.direction}`, 10, 40);
+        ctx.fillText(`Collisions: ${showCollisions ? "VISIBLE" : "HIDDEN"}`, 10, 60);
+        ctx.fillText(`Player Hitbox: X:${PLAYER_HITBOX_OFFSET_X} Y:${PLAYER_HITBOX_OFFSET_Y} W:${PLAYER_HITBOX_WIDTH} H:${PLAYER_HITBOX_HEIGHT}`, 10, 80);
+      }
+    }
+
+    // Main game loop
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Start dialog sequence
+    function startDialog() {
+      isDialogActive = true;
+      currentDialog = 0;
+      showDialog(dialogSequences[currentDialog]);
+    }
+
+    // Show dialog
+    function showDialog(dialog) {
+      dialogContent.textContent = dialog.text;
+      dialogPortrait.src = dialog.portrait;
+      dialogName.textContent = dialog.name;
+      dialogBox.style.display = "block";
+    }
+
+    // Advance to next dialog
+    function advanceDialog() {
+      currentDialog++;
+
+      if (currentDialog >= dialogSequences.length) {
+        // End of dialog - just close it without redirecting
+        dialogBox.style.display = "none";
+        isDialogActive = false;
+      } else {
+        // Show next dialog
+        showDialog(dialogSequences[currentDialog]);
+      }
+    }
+
+    // Audio setup
+    let bgMusic = null;
+    let isPlaying = false;
+    let hasStarted = false;
+    const muteOverlay = document.getElementById("sound-mute-overlay");
+
+    function initAudio() {
+      bgMusic = new Audio("images/home_bg_music.mp3");
+      bgMusic.loop = true;
+      bgMusic.volume = 0.7;
+
+      // Load audio settings from localStorage
+      const savedVolume = localStorage.getItem("fulife_music_volume");
+      if (savedVolume) {
+        bgMusic.volume = parseFloat(savedVolume);
+      }
+
+      const musicEnabled = localStorage.getItem("fulife_music_enabled");
+      isPlaying = musicEnabled === null ? true : musicEnabled === "true";
+
+      if (!isPlaying) {
+        muteOverlay.style.display = "block";
+      } else {
+        // Try to play music
+        document.addEventListener("click", tryPlayMusic, { once: true });
+      }
+    }
+
+    function tryPlayMusic() {
+      if (isPlaying && !hasStarted) {
+        const playPromise = bgMusic.play();
+
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              hasStarted = true;
+              console.log("Music started successfully");
+            })
+            .catch((err) => {
+              console.log("Autoplay prevented:", err);
+              // We'll try again on the next user interaction
+              document.addEventListener("click", tryPlayMusic, {
+                once: true,
+              });
+            });
+        }
+      }
+    }
+
+    function toggleMusic(e) {
+      if (e) e.stopPropagation();
+
+      if (!bgMusic) return;
+
+      if (isPlaying) {
+        bgMusic.pause();
+        muteOverlay.style.display = "block";
+      } else {
+        const playPromise = bgMusic.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => console.log("Play prevented:", err));
+        }
+        muteOverlay.style.display = "none";
+        hasStarted = true;
+      }
+
+      isPlaying = !isPlaying;
+      localStorage.setItem("fulife_music_enabled", isPlaying);
+    }
+
+    function setVolume(value) {
+      if (bgMusic) {
+        bgMusic.volume = value;
+        localStorage.setItem("fulife_music_volume", value);
+      }
+    }
+
+    function openSettings() {
+      console.log("Settings would open here");
+      // Implement settings popup
+    }
+
+    // Show popup dialog
+    function showPopup() {
+      document.getElementById("popup").style.display = "block";
+      popupVisible = true;
+    }
+
+    // Close popup
+    function closePopup() {
+      document.getElementById("popup").style.display = "none";
+      popupVisible = false;
+    }
+
+    // Go to next area
+    function goToNextArea() {
+      const playerName = getPlayerName();
+      window.location.href = `quest2.html?name=${encodeURIComponent(
+        playerName
+      )}`;
+    }
+
+    // Get player name from URL
+    function getPlayerName() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get("name") || "Player";
+    }
+
+    // Wait for images to load before starting
+    function startGameWhenReady() {
+      if (background.complete && playerSprite.complete && npcSprite.complete) {
+        initAudio();
+        gameLoop();
+      } else {
+        setTimeout(startGameWhenReady, 100);
+      }
+    }
+
+    // Resize canvas to fit window
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      scale = Math.min(
+        canvas.width / worldWidth,
+        canvas.height / worldHeight
+      );
+
+      offsetX = (canvas.width - worldWidth * scale) / 2;
+      offsetY = (canvas.height - worldHeight * scale) / 2;
+    }
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    // Load images
+    const background = new Image();
+    background.src = "images/home.png";
+
+    const playerSprite = new Image();
+    playerSprite.src = "images/player_sprite.png";
+
+    const npcSprite = new Image();
+    npcSprite.src = "images/engineer.png";
+
+    // Keyboard controls
+    const keys = {};
+    let frame = 1;
+    let frameDelay = 0;
+
+    // NPC position
+    const npc = {
+      x: worldWidth * 0.8,
+      y: worldHeight * 0.35,
+      width: 40,
+      height: 50,
+    };
+
+    // Player initial position
+    let player = {
+      x: worldWidth * 0.7,
+      y: worldHeight * 0.35,
+      speed: 2,
+      direction: "down",
+      isMoving: false,
+    };
+
+    // Define collision areas
+    const collisionAreas = [
+      // Room boundaries
+      { x: 20, y: 20, width: worldWidth - 40, height: 20 }, // Top wall
+      { x: 350, y: 20, width: 20, height: worldHeight - 40 }, // Left wall
+      { x: 760, y: 100, width: 20, height: worldHeight - 40 }, // Right wall
+      { x: 20, y: worldHeight - 40, width: worldWidth - 40, height: 20 }, // Bottom wall
+      
+      { x: 500, y:95, width: 75, height: 100 }
+      // Exit area is NOT included so player can walk through it
+    ];
+
+    startGameWhenReady();
+  </script>
+</body>
+</html> 
