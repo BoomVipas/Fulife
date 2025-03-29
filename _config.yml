@@ -1,8 +1,0 @@
-theme: jekyll-theme-primer
-title: FULIFE
-description: FULIFE game built for Web
-exclude: [docs]
-include: [demo, fulife, assets]
-
-# Set Root URL
-baseurl: /Fulife 

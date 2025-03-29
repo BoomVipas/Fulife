@@ -564,7 +564,7 @@
         
         // Redirect to quest4.html after dialogue with the CEO
         const playerName = getPlayerName();
-        window.location.href = `quest4.html?name=${encodeURIComponent(playerName)}`;
+        window.location.href = `quest3.html?name=${encodeURIComponent(playerName)}`;
       } else {
         // Show next dialog
         showDialog(dialogSequences[currentDialog]);
@@ -603,7 +603,7 @@
 
     function leaveHouse() {
       const playerName = new URLSearchParams(window.location.search).get("name") || "Player";
-      window.location.href = `quest4.html?name=${encodeURIComponent(playerName)}`;
+      window.location.href = `quest3.html?name=${encodeURIComponent(playerName)}`;
     }
 
     function resizeCanvas() {

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FULIFE - Logic Gates Quest</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow: scroll;
+        background-color: #f9e9c8;
+        font-family: "Press Start 2P", cursive;
+      }
+
+      .main-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 50px;
+        padding: 0px;
+      }
+
+      .title-section {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-top: 20px;
+        padding-left: 10px;
+      }
+
+      .title {
+        color: black;
+        font-size: 50px;
+        font-weight: 500;
+      }
+
+      .dialog-container {
+        display: flex;
+        flex-direction: row;
+        background: white;
+        border-radius: 15px;
+        border: 5px #ba5109 solid;
+        padding: 20px;
+        margin-bottom: 30px;
+        min-height: 100px;
+      }
+
+      .engineer-icon {
+        width: 45px;
+        height: 60px;
+        margin-right: 20px;
+        justify-items: baseline;
+      }
+
+      .dialog-content {
+        flex: 1;
+        color: black;
+        font-size: 24px;
+        font-family: sans-serif;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+      }
+
+      .gates-container {
+        display: flex;
+        flex-direction: row;
+        gap: 30px;
+        flex: 1;
+      }
+
+      .gate-box {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #ffcc79;
+        border-radius: 15px;
+        border: 3px black solid;
+        padding: 10px;
+      }
+
+      .gate-title {
+        color: black;
+        font-size: 30px;
+        text-align: center;
+        margin-bottom: 10px;
+        padding-top: 10px;
+      }
+
+      .gate-description {
+        color: black;
+        font-size: 18px;
+        font-family: sans-serif;
+        font-weight: 700;
+        margin-bottom: 10px;
+        flex: 1;
+        padding-top: 20px;
+        flex: auto;
+      }
+
+      .gate-image {
+        width: 200px;
+        height: 150px;
+        margin: 0 auto;
+      }
+
+      .interactive-area {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 30px;
+        gap: 15px;
+      }
+
+      button {
+        padding: 15px 30px;
+        background-color: #ba5109;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-family: "Press Start 2P", cursive;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #8b3e07;
+      }
+
+      /* Dialog box styling */
+      #dialog-box {
+        position: fixed;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ffcc79;
+        color: black;
+        padding: 20px 30px;
+        border-radius: 20px;
+        border: 4px solid #964b00;
+        font-family: "Press Start 2P", monospace;
+        font-size: 14px;
+        text-align: left;
+        z-index: 10;
+        display: none;
+        width: 70%;
+        max-width: 600px;
+        min-width: 400px;
+        box-shadow: 4px 4px 0 #000;
+      }
+
+      #dialog-content {
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
+
+      #next-hint {
+        text-align: right;
+        color: #964b00;
+        animation: blink 1s infinite;
+      }
+
+      @keyframes blink {
+        0% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.3;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main-container">
+      <!-- Title Section -->
+      <div class="title-section">
+        <h1 class="title">AND & OR GATES</h1>
+      </div>
+
+      <!-- Dialog Container with Engineer and Text -->
+      <div class="dialog-container">
+        <img
+          class="engineer-icon"
+          src="../asset/quest/teachDoor.png"
+          alt="Engineer"
+        />
+        <div class="dialog-content">
+          The door is broken, we need to use circuit gates to connect the
+          wires!!
+        </div>
+      </div>
+
+      <!-- Gates Container with AND and OR Gates -->
+      <div class="gates-container">
+        <!-- AND Gate -->
+        <div class="gate-box">
+          <div class="gate-title">AND</div>
+          <div class="gate-description">
+            All inputs must be positive ("1") before the output is positive ("1"
+            or "ON")
+          </div>
+          <img
+            class="gate-image"
+            src="../asset/quest/ANDgates.png"
+            style="height: 92px"
+            alt="AND Gate"
+          />
+          <img
+            class="gate-image"
+            src="../asset/quest/ANDTable.png"
+            style="border: 1px black solid"
+            alt="AND Gate"
+          />
+        </div>
+
+        <!-- OR Gate -->
+        <div class="gate-box">
+          <div class="gate-title">OR</div>
+          <div class="gate-description">
+            At least one input must be positive ("1") to give a positive output
+            ("1" or "ON")<br /><br />
+            All inputs could also be positive
+          </div>
+          <img
+            class="gate-image"
+            src="../asset/quest/ORGates.png"
+            style="height: 120px"
+            alt="OR Gate"
+          />
+          <img
+            class="gate-image"
+            src="../asset/quest/ORTable.png"
+            style="border: 1px black solid"
+            alt="OR Gate"
+          />
+        </div>
+      </div>
+
+      <!-- Interactive Area -->
+      <div class="interactive-area">
+        <button id="try-btn">Try It!</button>
+      </div>
+    </div>
+
+    <script>
+      // Dialog elements
+      const dialogBox = document.getElementById("dialog-box");
+      const dialogContent = document.getElementById("dialog-content");
+
+      // Button elements
+
+      const tryBtn = document.getElementById("try-btn");
+
+      // Dialog state
+      let isDialogActive = false;
+      let currentDialog = 0;
+
+      // Event Listeners
+      tryBtn.addEventListener("click", redirectToNextQuest);
+
+      // Show dialog
+      function showDialog(dialog) {
+        dialogContent.textContent = dialog.text;
+        dialogBox.style.display = "block";
+      }
+
+      // Advance to next dialog
+      function advanceDialog() {
+        currentDialog++;
+
+        if (currentDialog >= helpDialogSequences.length) {
+          // End of dialog
+          dialogBox.style.display = "none";
+          isDialogActive = false;
+          dialogBox.removeEventListener("click", advanceDialog);
+        } else {
+          // Show next dialog
+          showDialog(helpDialogSequences[currentDialog]);
+        }
+      }
+
+      // Redirect to the next quest
+      function redirectToNextQuest() {
+        // Get player name from URL if available
+        const urlParams = new URLSearchParams(window.location.search);
+        const playerName = urlParams.get("name") || "Player";
+
+        // Redirect to quest4.html with player name
+        window.location.href = `quest4.html?name=${encodeURIComponent(
+          playerName
+        )}`;
+      }
+    </script>
+  </body>
+</html>

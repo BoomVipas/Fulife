@@ -258,6 +258,23 @@
       let exitTriggered = false;
       let popupVisible = false;
 
+      // Define collision area similar to quest2
+      const collisionArea = {
+        x: exitArea.x,
+        y: exitArea.y,
+        width: exitArea.width,
+        height: exitArea.height
+      };
+
+      const collisionAreas = [
+        { x: 0, y: 0, width: 800, height: 20 },  // Top boundary
+        { x: 0, y: 580, width: 800, height: 20 },  // Bottom boundary
+        { x: 350, y: 0, width: 20, height: 600 },  // Left boundary
+        { x: 780, y: 0, width: 20, height: 600 },  // Right boundary
+        { x: 495, y: 110, width: 80, height: 80 },  // Example obstacle
+        // Add more collision areas as needed
+      ];
+      
       // Resize canvas to fit window
       function resizeCanvas() {
         canvas.width = window.innerWidth;
@@ -305,6 +322,14 @@
         speed: 2,
         direction: "down",
         isMoving: false,
+      };
+
+      // Player collision box dimensions (relative to player position)
+      const playerCollision = {
+        offsetX: -10, // offset from player.x
+        offsetY: -15,  // offset from player.y
+        width: 20,    // width of collision box
+        height: 20    // height of collision box
       };
 
       // Dialog sequences
@@ -385,12 +410,37 @@
           player.isMoving = true;
         }
 
-        // Simple boundary checking
-        if (proposedX > 20 && proposedX < worldWidth - 20) {
-          player.x = proposedX;
+        // Check for collisions with collision areas
+        let canMove = true;
+        for (const area of collisionAreas) {
+          // Calculate player hitbox based on proposed position
+          const playerHitbox = {
+            x: proposedX + playerCollision.offsetX,
+            y: proposedY + playerCollision.offsetY,
+            width: playerCollision.width,
+            height: playerCollision.height
+          };
+          
+          // Simple collision detection using player hitbox
+          if (
+            playerHitbox.x < area.x + area.width &&
+            playerHitbox.x + playerHitbox.width > area.x &&
+            playerHitbox.y < area.y + area.height &&
+            playerHitbox.y + playerHitbox.height > area.y
+          ) {
+            canMove = false;
+            break;
+          }
         }
-        if (proposedY > 20 && proposedY < worldHeight - 20) {
-          player.y = proposedY;
+
+        // Simple boundary checking and apply movement if no collision
+        if (canMove) {
+          if (proposedX > 20 && proposedX < worldWidth - 20) {
+            player.x = proposedX;
+          }
+          if (proposedY > 20 && proposedY < worldHeight - 20) {
+            player.y = proposedY;
+          }
         }
 
         // Animation frame update
@@ -496,13 +546,69 @@
         }
 
         // Draw exit area indicator
-        ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+        // Comment out or remove the code that draws the exit area indicator
+        /*
+        ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
         ctx.fillRect(
           offsetX + exitArea.x * scale,
           offsetY + exitArea.y * scale,
           exitArea.width * scale,
           exitArea.height * scale
         );
+
+        // Optionally, add a border
+        ctx.strokeStyle = "red"; // Border color
+        ctx.lineWidth = 2; // Border width
+        ctx.strokeRect(
+          offsetX + exitArea.x * scale,
+          offsetY + exitArea.y * scale,
+          exitArea.width * scale,
+          exitArea.height * scale
+        );
+        */
+
+        // Draw collision areas
+        // Comment out or remove the code that draws the collision areas
+        /*
+        for (const area of collisionAreas) {
+          ctx.fillStyle = "rgba(0, 255, 0, 0.5)"; // Noticeable color
+          ctx.fillRect(
+            offsetX + area.x * scale,
+            offsetY + area.y * scale,
+            area.width * scale,
+            area.height * scale
+          );
+
+          // Add a border
+          ctx.strokeStyle = "green"; // Border color
+          ctx.lineWidth = 2; // Border width
+          ctx.strokeRect(
+            offsetX + area.x * scale,
+            offsetY + area.y * scale,
+            area.width * scale,
+            area.height * scale
+          );
+        }
+
+        // Draw player collision box
+        ctx.fillStyle = "rgba(255, 255, 0, 0.5)"; // Yellow, semi-transparent
+        ctx.fillRect(
+          offsetX + (player.x + playerCollision.offsetX) * scale,
+          offsetY + (player.y + playerCollision.offsetY) * scale,
+          playerCollision.width * scale,
+          playerCollision.height * scale
+        );
+
+        // Add a border to player collision box
+        ctx.strokeStyle = "yellow"; // Yellow border
+        ctx.lineWidth = 2; // Border width
+        ctx.strokeRect(
+          offsetX + (player.x + playerCollision.offsetX) * scale,
+          offsetY + (player.y + playerCollision.offsetY) * scale,
+          playerCollision.width * scale,
+          playerCollision.height * scale
+        );
+        */
       }
 
       // Main game loop

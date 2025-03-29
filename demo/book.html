@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Book</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+      font-family: 'Press Start 2P', monospace;
+      color: #000;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+
+    .book-container {
+      width: 90vw;
+      height: 90vh;
+      margin: 5vh auto;
+      background: #fce2a6;
+      border: 6px solid #964B00;
+      border-radius: 30px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 8px 8px 0 black;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: flex-start;
+      gap: 10px;
+      padding: 20px 30px 0px;
+    }
+
+    .tab-btn {
+      font-family: 'Press Start 2P', cursive;
+      background: #eeee;
+      border-radius: 10px 10px 0 0;
+      padding: 12px 30px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .tab-btn.active {
+      background: white;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 0px;
+      right: 20px;
+      font-size: 30px;
+      cursor: pointer;
+    }
+
+    .book-pages {
+      flex: 1;
+      display: flex;
+    }
+
+    .left-page {
+      width: 50%;
+      background: white;
+      border-radius: 0 0 0 25px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .right-page {
+      width: 50%;
+      background: white;
+      border-radius: 0 0 25px 0;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .divider {
+      width: 4px;
+      background: #964B00;
+    }
+
+    .task-list .task {
+      background: #ddd;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    .progress-card {
+      background: #e5d0c5;
+      padding: 15px;
+      text-align: center;
+      margin-bottom: 20px;
+      border-radius: 10px;
+    }
+
+    .locked {
+      filter: grayscale(1);
+      opacity: 0.6;
+    }
+
+    .slider-label {
+      margin: 20px 0 10px;
+      font-size: 14px;
+    }
+
+    .slider {
+      width: 100%;
+    }
+
+    button {
+      font-family: 'Press Start 2P', monospace;
+      background: #a65423;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      padding: 12px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      width: 100%;
+    }
+
+    button:hover {
+      background: #833e1b;
+    }
+
+    .trophy-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.trophy-card {
+  display: flex;
+  align-items: center;
+  background: #e5d0c5;
+  border-radius: 16px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  box-shadow: 4px 4px 0 #b6894b;
+}
+
+.trophy-card img {
+  width: 60px;
+  margin-right: 20px;
+}
+
+.trophy-card:hover {
+  transform: scale(1.02);
+}
+
+.trophy-card.locked {
+  background: #555;
+  filter: grayscale(1);
+  opacity: 0.7;
+  box-shadow: 4px 4px 0 #222;
+  color: white;
+}
+
+
+  </style>
+</head>
+<body>
+  <div class="book-container">
+    <div class="tabs">
+      <div class="tab-btn active" onclick="switchTab('task')">TASK</div>
+      <div class="tab-btn" onclick="switchTab('trophy')">TROPHY</div>
+      <div class="tab-btn" onclick="switchTab('setting')">SETTING</div>
+    </div>
+    <div class="close-btn" onclick="window.history.back()">✕</div>
+
+    <div class="book-pages">
+      <div class="left-page" id="leftPage"></div>
+      <div class="divider"></div>
+      <div class="right-page" id="rightPage"></div>
+    </div>
+  </div>
+
+  <script>
+    const left = document.getElementById("leftPage");
+    const right = document.getElementById("rightPage");
+    const tabs = document.querySelectorAll(".tab-btn");
+  
+    function switchTab(tab) {
+      tabs.forEach(t => t.classList.remove("active"));
+      document.querySelector(`[onclick*="${tab}"]`).classList.add("active");
+  
+      if (tab === "task") {
+        left.innerHTML = `
+          <div class="task-list">
+            <div class="task" onclick="showTaskDetail('ceo')">• Find CEO</div>
+            <div class="task" onclick="showTaskDetail('jonas')">• TALK TO JONAS</div>
+          </div>
+        `;
+        right.innerHTML = `<div style="color: gray;">Select a task to view details</div>`;
+      } else if (tab === "trophy") {
+        left.innerHTML = `
+  <div class="trophy-grid">
+    <div class="trophy-card" onclick="showTrophyDetail('engineer')">
+      <img src="../../asset/book/engineer.png" />
+      <div>
+        <strong>20/25</strong><br />ENGINEER
+      </div>
+    </div>
+    <div class="trophy-card locked" onclick="showTrophyDetail('locked')">
+      <img src="../../asset/lock.png" />
+      <div>DOCTOR</div>
+    </div>
+    <div class="trophy-card locked" onclick="showTrophyDetail('locked')">
+      <img src="../../asset/lock.png" />
+      <div>LAWYER</div>
+    </div>
+    <div class="trophy-card locked" onclick="showTrophyDetail('locked')">
+      <img src="../../asset/lock.png" />
+      <div>AGRICULTURAL</div>
+    </div>
+  </div>
+`;
+
+  right.innerHTML = `<div style="color: gray;">Select a career to view details</div>`;
+
+      } else if (tab === "setting") {
+        left.innerHTML = `
+          <button>RESUME</button>
+          <button>LOAD</button>
+          <button>EXIST</button>
+        `;
+        right.innerHTML = `
+          <div class="slider-label">Music</div>
+          <input type="range" class="slider" min="0" max="1" step="0.01" value="0.5" />
+          <div class="slider-label">SFX</div>
+          <input type="range" class="slider" min="0" max="1" step="0.01" value="0.5" />
+        `;
+      }
+    }
+  
+    function showTaskDetail(task) {
+      if (task === "ceo") {
+        right.innerHTML = `
+          <div><strong>Find CEO</strong></div>
+          <p style="margin-top: 10px;">
+            The CEO is looking for you! He has a special request that might lead to an exciting opportunity.
+          </p>
+          <div style="margin-top: 20px; text-align: right;">
+            <span style="background: orange; padding: 5px 10px; border-radius: 5px;">XP +100</span>
+          </div>
+        `;
+      } else if (task === "jonas") {
+        right.innerHTML = `
+          <div><strong>TALK TO JONAS</strong></div>
+          <p style="margin-top: 10px;">
+            Jonas has been acting strange lately. Maybe he knows something important...
+          </p>
+          <div style="margin-top: 20px; text-align: right;">
+            <span style="background: orange; padding: 5px 10px; border-radius: 5px;">XP +80</span>
+          </div>
+        `;
+      }
+    }
+
+    function showTrophyDetail(career) {
+  if (career === "engineer") {
+    right.innerHTML = `
+      <div><strong>ENGINEER</strong></div>
+      <p style="margin-top: 10px;">
+        You have achieved <strong>20</strong> out of <strong>25</strong> goals.
+        <br /><br />
+        <strong>Status:</strong> Intermediate Engineer 🏅
+      </p>
+    `;
+  } else if (career === "locked") {
+    right.innerHTML = `
+      <div><strong>Career Locked</strong></div>
+      <p style="margin-top: 10px;">
+        You haven't unlocked this career yet.<br />
+        Complete more achievements to gain access!
+      </p>
+    `;
+  }
+}
+
+  
+    switchTab("task"); // load default tab
+  </script>
+  
+</body>
+</html>
