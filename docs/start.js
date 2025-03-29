@@ -159,6 +159,7 @@ function startGameplay() {
     // Show and position game container
     const gameContainer = document.getElementById("game-container");
     if (gameContainer) {
+        // Make sure it's visible before anything else
         gameContainer.style.display = "block";
         
         // Ensure game container is properly positioned
@@ -169,6 +170,9 @@ function startGameplay() {
         gameContainer.style.margin = "0 auto";
         gameContainer.style.boxShadow = "0 0 20px rgba(0, 0, 0, 0.5)";
         gameContainer.style.zIndex = "10";
+    } else {
+        console.error("Game container not found!");
+        return; // Exit if we can't find the game container
     }
     
     // Make sure canvas is visible and properly sized
@@ -184,6 +188,9 @@ function startGameplay() {
             ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
+    } else {
+        console.error("Canvas element not found!");
+        return; // Exit if we can't find the canvas
     }
     
     // Switch to gameplay state
@@ -193,28 +200,35 @@ function startGameplay() {
     setTimeout(() => {
         console.log("Delayed initialization starting...");
         
-        // Reset player position flag to ensure they appear in center after cutscene
-        if (typeof player !== 'undefined') {
-            player.hasBeenPositioned = false;
-        }
-        
-        // Initialize the game
-        if (typeof initGame === 'function') {
-            console.log("Calling initGame function");
-            initGame(); // This calls the game.js initGame function
-            
-            // Ensure the game loop is started
-            if (typeof gameLoop === 'function' && !gameInitialized) {
-                requestAnimationFrame(gameLoop);
+        try {
+            // Reset player position flag to ensure they appear in center after cutscene
+            if (typeof player !== 'undefined') {
+                player.hasBeenPositioned = false;
             }
             
-            // Create the Tech CEO NPC encounter after a delay
-            // Longer delay to give time to explore and for the game to stabilize
-            setTimeout(createTechCEOEncounter, 8000);
-        } else {
-            console.error("initGame function not found!");
+            // Initialize the game
+            if (typeof initGame === 'function') {
+                console.log("Calling initGame function");
+                initGame(); // This calls the game.js initGame function
+                
+                // Ensure the game loop is started
+                if (typeof gameLoop === 'function' && !gameInitialized) {
+                    console.log("Starting game loop");
+                    requestAnimationFrame(gameLoop);
+                }
+                
+                // Create the Tech CEO NPC encounter after a delay
+                // Longer delay to give time to explore and for the game to stabilize
+                setTimeout(createTechCEOEncounter, 8000);
+            } else {
+                console.error("initGame function not found!");
+                alert("Game initialization failed. Please refresh the page.");
+            }
+        } catch (error) {
+            console.error("Error during game initialization:", error);
+            alert("Game initialization error: " + error.message + ". Please refresh the page.");
         }
-    }, 100);
+    }, 500); // Increased delay to ensure DOM is ready
 }
 
 // Function to create the Tech CEO NPC encounter

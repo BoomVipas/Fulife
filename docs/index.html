@@ -5,527 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FULIFE - Career Simulation Game</title>
     <style>
-        /* General Styles */
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
             background-color: #1a1a1a;
             color: white;
-            overflow: hidden;
             height: 100vh;
-            width: 100vw;
-        }
-        
-        /* Game Container Styles */
-        .game-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background-color: #1a1a1a;
-            z-index: 10;
+            text-align: center;
         }
         
-        /* Main Menu Styles */
-        .game-title {
-            font-size: 4rem;
-            margin-bottom: 2rem;
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
             color: #ff9900;
             text-shadow: 0 0 10px rgba(255, 153, 0, 0.7);
         }
         
-        .menu-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            width: 300px;
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
         }
         
-        .menu-button {
-            background-color: #222;
+        .buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .button {
+            background-color: #35424a;
             color: white;
-            border: 2px solid #333;
-            border-radius: 5px;
             padding: 0.8rem 1.5rem;
-            font-size: 1.2rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
             cursor: pointer;
+            text-decoration: none;
             transition: all 0.3s ease;
         }
         
-        .menu-button:hover {
-            background-color: #444;
+        .button:hover {
+            background-color: #4a5d69;
             transform: translateY(-2px);
         }
         
-        .menu-button.large {
-            font-size: 1.5rem;
-            padding: 1rem 1.5rem;
+        .button.primary {
             background-color: #ff9900;
             color: #000;
         }
         
-        .menu-button.large:hover {
+        .button.primary:hover {
             background-color: #ffb347;
-        }
-        
-        .menu-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        /* Settings Styles */
-        .settings-item {
-            margin-bottom: 1.5rem;
-            width: 100%;
-        }
-        
-        .volume-slider {
-            width: 100%;
-            margin-top: 10px;
-        }
-        
-        /* Character Customization Styles */
-        .character-customization {
-            display: flex;
-            gap: 2rem;
-            width: 80%;
-            max-width: 1000px;
-        }
-        
-        .character-preview {
-            width: 30%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .character-options {
-            width: 70%;
-            padding: 20px;
-            background-color: #222;
-            border-radius: 10px;
-        }
-        
-        .option-group {
-            margin-bottom: 20px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 15px;
-        }
-        
-        .slider-container {
-            margin: 10px 0;
-        }
-        
-        .color-options {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .color-option {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-        
-        .color-option:hover, .color-option.selected {
-            border-color: #333;
-        }
-        
-        .start-button {
-            background-color: #35424a;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            margin-top: 20px;
-            float: right;
-        }
-        
-        /* Cutscene Container */
-        #cutsceneContainer {
-            background-color: #000;
-            color: white;
-            text-align: center;
-        }
-        
-        .cutscene-content {
-            width: 80%;
-            max-width: 800px;
-        }
-        
-        .cutscene-image {
-            width: 100%;
-            height: 400px;
-            background-color: #333;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: #aaa;
-        }
-        
-        .cutscene-text {
-            font-size: 1.2rem;
-            line-height: 1.7;
-            margin-bottom: 30px;
-        }
-        
-        .cutscene-button {
-            background-color: #35424a;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        
-        /* Game Container - existing styles from fulife.html */
-        #game-container {
-            width: 800px;
-            height: 600px;
-            position: relative;
-            background-color: black;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            display: none;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            margin: 0 auto;
-            overflow: hidden;
-        }
-        
-        /* Game Canvas */
-        #gameCanvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-        
-        /* Dialog Box and Inventory Styles */
-        .dialog {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 700px;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            border-radius: 10px;
-            padding: 15px;
-            display: none;
-        }
-        
-        #npcName {
-            margin-top: 0;
-            color: #ff9900;
-        }
-        
-        #dialogText {
-            margin-bottom: 15px;
-        }
-        
-        .btn {
-            background-color: #444;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            margin-right: 10px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        
-        .btn:hover {
-            background-color: #666;
-        }
-        
-        #inventoryContainer {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 600px;
-            background-color: rgba(0, 0, 0, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            display: none;
-            flex-direction: column;
-        }
-        
-        #inventorySlots {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .inventory-slot {
-            width: 100%;
-            aspect-ratio: 1;
-            background-color: #333;
-            border-radius: 5px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        
-        .inventory-slot:hover {
-            background-color: #444;
-        }
-        
-        .item-icon {
-            font-size: 2rem;
-            margin-bottom: 5px;
-        }
-        
-        .item-name {
-            font-size: 0.8rem;
-            text-align: center;
-        }
-        
-        /* Stats Panel */
-        .stats-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: rgba(41, 34, 21, 0.85);
-            border: 2px solid #6d5c33;
-            border-radius: 5px;
-            padding: 10px;
-            color: #ffebc4;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            min-width: 150px;
-            z-index: 10;
-        }
-        
-        .stats-content {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-weight: bold;
-            color: #ffdd99;
-        }
-        
-        /* Inventory container */
-        .stats-container {
-            margin: 15px 0;
-            border-top: 1px solid #444;
-            padding-top: 15px;
-        }
-        
-        .stat {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
         }
     </style>
 </head>
 <body>
-    <!-- Main Menu Container -->
-    <div id="mainMenuContainer" class="game-screen">
-        <h1 class="game-title">FULIFE</h1>
-        <div class="menu-buttons">
-            <button id="newGameBtn" class="menu-button large">New Game</button>
-            <button id="continueBtn" class="menu-button" disabled>Continue</button>
-            <button id="settingsBtn" class="menu-button">Settings</button>
-            <button id="aboutBtn" class="menu-button">About</button>
-        </div>
-    </div>
-    
-    <!-- Settings Container -->
-    <div id="settingsContainer" class="game-screen" style="display: none;">
-        <h2>Settings</h2>
-        <div class="settings-item">
-            <label for="volumeSlider">Background Music Volume: <span id="volumeValue">50%</span></label>
-            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.1" value="0.5" 
-                onchange="adjustVolume(this.value); document.getElementById('volumeValue').textContent = Math.round(this.value * 100) + '%'">
-        </div>
-        <button class="menu-button" onclick="backToMainMenu()">Back to Main Menu</button>
-    </div>
-    
-    <!-- About Container -->
-    <div id="aboutContainer" class="game-screen" style="display: none;">
-        <h2>About FULIFE</h2>
-        <p>FULIFE is a life simulation game where you can experience different career paths and life choices. Make decisions, talk to NPCs, and build the virtual life you've always wanted!</p>
-        <p>In this game, you'll start as a young person with a second chance at life. Explore different career options, improve your skills, and see where your choices lead you.</p>
-        <p>The game features various challenges and mini-games related to different career paths, allowing you to experience what different professions might be like.</p>
-        <button class="menu-button" onclick="backToMainMenu()">Back to Main Menu</button>
-    </div>
-    
-    <!-- Character Customization Container -->
-    <div id="customizationContainer" class="game-screen" style="display: none;">
-        <div class="character-preview">
-            <div style="width: 160px; height: 200px; background-color: #ddd; margin-bottom: 20px;">
-                <!-- Character preview would go here -->
-                <img id="characterPreview" src="images/player_sprite.png" alt="Character" style="width: 100%;">
-            </div>
-            <input type="text" id="playerName" placeholder="Your Name" style="padding: 8px; margin-bottom: 10px; width: 80%;">
-        </div>
-        <div class="character-options">
-            <h2>Customize Your Character</h2>
-            <p>Customize your appearance before starting your new life adventure.</p>
-            
-            <div class="option-group">
-                <h3>Hair Style</h3>
-                <div class="slider-container">
-                    <label for="hairSlider">Style: <span id="hairValue">3</span></label>
-                    <input type="range" id="hairSlider" min="1" max="5" value="3"
-                        onchange="document.getElementById('hairValue').textContent = this.value">
-                </div>
-                <label>Hair Color:</label>
-                <div class="color-options">
-                    <div class="color-option selected" style="background-color: #000000;"></div>
-                    <div class="color-option" style="background-color: #8B4513;"></div>
-                    <div class="color-option" style="background-color: #FFD700;"></div>
-                    <div class="color-option" style="background-color: #A9A9A9;"></div>
-                </div>
-            </div>
-            
-            <div class="option-group">
-                <h3>Shirt</h3>
-                <div class="slider-container">
-                    <label for="shirtSlider">Style: <span id="shirtValue">2</span></label>
-                    <input type="range" id="shirtSlider" min="1" max="4" value="2"
-                        onchange="document.getElementById('shirtValue').textContent = this.value">
-                </div>
-                <label>Shirt Color:</label>
-                <div class="color-options">
-                    <div class="color-option" style="background-color: #FF0000;"></div>
-                    <div class="color-option selected" style="background-color: #0000FF;"></div>
-                    <div class="color-option" style="background-color: #008000;"></div>
-                    <div class="color-option" style="background-color: #800080;"></div>
-                </div>
-            </div>
-            
-            <div class="option-group">
-                <h3>Pants</h3>
-                <div class="slider-container">
-                    <label for="pantsSlider">Style: <span id="pantsValue">1</span></label>
-                    <input type="range" id="pantsSlider" min="1" max="3" value="1"
-                        onchange="document.getElementById('pantsValue').textContent = this.value">
-                </div>
-                <label>Pants Color:</label>
-                <div class="color-options">
-                    <div class="color-option" style="background-color: #000080;"></div>
-                    <div class="color-option selected" style="background-color: #000000;"></div>
-                    <div class="color-option" style="background-color: #8B4513;"></div>
-                    <div class="color-option" style="background-color: #808080;"></div>
-                </div>
-            </div>
-            
-            <button class="start-button" onclick="startGameFromCustomization()">START</button>
-        </div>
-    </div>
-    
-    <!-- Cutscene Container -->
-    <div id="cutsceneContainer" class="game-screen" style="display: none;">
-        <div class="cutscene-content">
-            <div class="cutscene-image" id="cutsceneImage">
-                [Cutscene Image Placeholder]
-            </div>
-            <div class="cutscene-text" id="cutsceneText">
-                Cutscene text will appear here...
-            </div>
-            <button class="cutscene-button" onclick="showNextCutscene()">Continue</button>
-        </div>
-    </div>
-    
-    <!-- Main Game Container (from existing fulife.html) -->
-    <div id="game-container" style="display: none;">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        
-        <!-- Dialog Box (Integrated into the stardewDialog in our updated game.js) -->
-        <div id="dialogBox" class="dialog" style="display: none;">
-            <h3 id="npcName">NPC Name</h3>
-            <div id="dialogText">Dialog text goes here...</div>
-            <div id="dialogOptions"></div>
-            <button id="closeDialog" class="btn" style="display: none;" onclick="closeDialog()">Close</button>
-        </div>
-        
-        <!-- Inventory Container -->
-        <div id="inventoryContainer" style="display: none;">
-            <h2>Inventory</h2>
-            <div id="inventorySlots">
-                <!-- Inventory slots will be added dynamically -->
-            </div>
-            <div class="stats-container">
-                <div class="stat">
-                    <span class="stat-label">Education:</span>
-                    <span class="stat-value" id="stat-education">10</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Career:</span>
-                    <span class="stat-value" id="stat-career">5</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Happiness:</span>
-                    <span class="stat-value" id="stat-happiness">50</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Health:</span>
-                    <span class="stat-value" id="stat-health">100</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Money:</span>
-                    <span class="stat-value" id="stat-money">$1000</span>
-                </div>
-            </div>
-            <button class="btn" onclick="toggleInventory()">Close</button>
-        </div>
+    <h1>FULIFE</h1>
+    <p>Welcome to FULIFE - Career Simulation Game</p>
+    <div class="buttons">
+        <a href="start-page.html" class="button primary">Start Game</a>
+        <a href="https://github.com/yourusername/FULIFE" class="button">GitHub</a>
     </div>
 
-    <!-- Mobile Controls (from existing fulife.html) -->
-    <div id="mobileControls" style="display: none;">
-        <div class="mobile-buttons">
-            <div class="direction-pad">
-                <div></div>
-                <button class="mobile-btn" id="upBtn">↑</button>
-                <div></div>
-                <button class="mobile-btn" id="leftBtn">←</button>
-                <div></div>
-                <button class="mobile-btn" id="rightBtn">→</button>
-                <div></div>
-                <button class="mobile-btn" id="downBtn">↓</button>
-                <div></div>
-            </div>
-            
-            <div class="action-buttons">
-                <button class="mobile-btn" id="actionBtn">E</button>
-                <button class="mobile-btn" id="inventoryBtn">I</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Game Scripts -->
-    <script src="images.js"></script>
-    <script src="logic-gates.js"></script>
-    <script src="cutscene-images.js"></script>
-    <script src="start.js"></script>
-    <script src="game.js"></script>
+    <script>
+        // Redirect to start page after a brief delay
+        setTimeout(function() {
+            window.location.href = "start-page.html";
+        }, 3000);
+    </script>
 </body>
 </html>

@@ -209,64 +209,55 @@ const player = {
         ctx.fillRect(this.x, this.y, this.width, this.height);
         
         try {
-            if (this.spriteImg && this.spriteImg.complete && this.spriteSheet) {
-                // Use the sprite sheet for drawing
-                // Each frame is 108x144 pixels in our sprite sheet
-                const frameWidth = 108;
-                const frameHeight = 144;
-                
-                // Determine direction for sprite selection (0=down, 1=up, 2=right, 3=left)
-                let directionIndex = 0; // Default facing down
-                if (this.facing === 'up') directionIndex = 1;
-                else if (this.facing === 'right') directionIndex = 2;
-                else if (this.facing === 'left') directionIndex = 3;
-                
-                // Determine animation frame based on movement
-                let frameIndex = 1; // Default to middle (standing) frame
-                if (this.isMoving) {
-                    // Calculate animation frame based on time
-                    const walkSpeed = 200; // ms per frame
-                    frameIndex = Math.floor((Date.now() % (walkSpeed * 3)) / walkSpeed);
-                }
-                
-                // Calculate source rectangle in sprite sheet
-                const sx = frameIndex * frameWidth;
-                const sy = directionIndex * frameHeight;
-                
-                // Draw the player sprite
+            // Check if sprite is available and loaded correctly
+            const hasValidSprite = this.spriteImg && this.spriteImg.complete && !this.spriteImg.naturalWidth === 0 && this.spriteSheet;
+            
+            if (hasValidSprite) {
                 try {
+                    // Use the sprite sheet for drawing with better error checking
+                    // Each frame is 108x144 pixels in our sprite sheet (or could be 64x64 for our fallback)
+                    const useSimpleSprite = this.spriteSheet.indexOf('data:image') === 0;
+                    
+                    // Set frame dimensions based on sprite type
+                    const frameWidth = useSimpleSprite ? 64 : 108;
+                    const frameHeight = useSimpleSprite ? 64 : 144;
+                    
+                    // Determine direction for sprite selection (0=down, 1=up, 2=right, 3=left)
+                    let directionIndex = 0; // Default facing down
+                    if (this.facing === 'up') directionIndex = 1;
+                    else if (this.facing === 'right') directionIndex = 2;
+                    else if (this.facing === 'left') directionIndex = 3;
+                    
+                    // Determine animation frame based on movement
+                    let frameIndex = 1; // Default to middle (standing) frame
+                    if (this.isMoving) {
+                        // Calculate animation frame based on time
+                        const walkSpeed = 200; // ms per frame
+                        const frameCount = useSimpleSprite ? 1 : 3; // Simple sprite has no animation frames
+                        frameIndex = Math.floor((Date.now() % (walkSpeed * frameCount)) / walkSpeed);
+                    }
+                    
+                    // Limit frameIndex for simple sprites
+                    if (useSimpleSprite) frameIndex = 0;
+                    
+                    // Calculate source rectangle in sprite sheet
+                    const sx = frameIndex * frameWidth;
+                    const sy = directionIndex * frameHeight;
+                    
+                    // Draw the player sprite
                     ctx.drawImage(
                         this.spriteImg,
                         sx, sy, frameWidth, frameHeight,  // Source rectangle
                         this.x, this.y, this.width, this.height  // Destination rectangle
                     );
-                } catch (err) {
-                    console.error("Error drawing sprite with drawImage:", err);
-                    // Already drew the blue rectangle as fallback
+                } catch (drawErr) {
+                    console.error("Error drawing sprite with drawImage:", drawErr);
+                    // Already drew the blue rectangle as fallback, now add details
+                    this.drawFallbackCharacter();
                 }
             } else {
-                // Draw eyes to indicate facing direction
-                ctx.fillStyle = 'white';
-                const eyeSize = 10;
-                const eyeOffset = 5;
-                
-                if (this.facing === 'down') {
-                    ctx.fillRect(this.x + this.width / 3 - eyeSize / 2, this.y + this.height / 4, eyeSize, eyeSize);
-                    ctx.fillRect(this.x + 2 * this.width / 3 - eyeSize / 2, this.y + this.height / 4, eyeSize, eyeSize);
-                    // Draw a mouth
-                    ctx.fillRect(this.x + this.width / 4, this.y + this.height / 2, this.width / 2, eyeSize / 2);
-                } else if (this.facing === 'up') {
-                    ctx.fillRect(this.x + this.width / 3 - eyeSize / 2, this.y + this.height / 5, eyeSize, eyeSize);
-                    ctx.fillRect(this.x + 2 * this.width / 3 - eyeSize / 2, this.y + this.height / 5, eyeSize, eyeSize);
-                } else if (this.facing === 'right') {
-                    ctx.fillRect(this.x + 2 * this.width / 3, this.y + this.height / 4, eyeSize, eyeSize);
-                    // Draw a small line for a side profile
-                    ctx.fillRect(this.x + this.width - eyeOffset, this.y + this.height / 3, eyeSize / 2, this.height / 3);
-                } else if (this.facing === 'left') {
-                    ctx.fillRect(this.x + this.width / 3 - eyeSize, this.y + this.height / 4, eyeSize, eyeSize);
-                    // Draw a small line for a side profile
-                    ctx.fillRect(this.x, this.y + this.height / 3, eyeSize / 2, this.height / 3);
-                }
+                // No valid sprite, draw fallback character
+                this.drawFallbackCharacter();
             }
             
             // Draw player debug info if debug mode is on
@@ -290,6 +281,32 @@ const player = {
             ctx.moveTo(this.x + this.width, this.y);
             ctx.lineTo(this.x, this.y + this.height);
             ctx.stroke();
+        }
+    },
+    
+    // Helper method to draw fallback character
+    drawFallbackCharacter: function() {
+        // Draw eyes to indicate facing direction
+        ctx.fillStyle = 'white';
+        const eyeSize = 10;
+        const eyeOffset = 5;
+        
+        if (this.facing === 'down') {
+            ctx.fillRect(this.x + this.width / 3 - eyeSize / 2, this.y + this.height / 4, eyeSize, eyeSize);
+            ctx.fillRect(this.x + 2 * this.width / 3 - eyeSize / 2, this.y + this.height / 4, eyeSize, eyeSize);
+            // Draw a mouth
+            ctx.fillRect(this.x + this.width / 4, this.y + this.height / 2, this.width / 2, eyeSize / 2);
+        } else if (this.facing === 'up') {
+            ctx.fillRect(this.x + this.width / 3 - eyeSize / 2, this.y + this.height / 5, eyeSize, eyeSize);
+            ctx.fillRect(this.x + 2 * this.width / 3 - eyeSize / 2, this.y + this.height / 5, eyeSize, eyeSize);
+        } else if (this.facing === 'right') {
+            ctx.fillRect(this.x + 2 * this.width / 3, this.y + this.height / 4, eyeSize, eyeSize);
+            // Draw a small line for a side profile
+            ctx.fillRect(this.x + this.width - eyeOffset, this.y + this.height / 3, eyeSize / 2, this.height / 3);
+        } else if (this.facing === 'left') {
+            ctx.fillRect(this.x + this.width / 3 - eyeSize, this.y + this.height / 4, eyeSize, eyeSize);
+            // Draw a small line for a side profile
+            ctx.fillRect(this.x, this.y + this.height / 3, eyeSize / 2, this.height / 3);
         }
     }
 };
@@ -843,19 +860,78 @@ function loadImages() {
     return new Promise((resolve) => {
         let loadedCount = 0;
         const requiredCount = 2; // At minimum we need the player sprite and job building
+        let loadingTimeout;
+
+        // Set a global timeout as safety mechanism
+        loadingTimeout = setTimeout(() => {
+            console.warn('Image loading timed out globally, using fallbacks');
+            // Force fallback sprite creation
+            if (!player.spriteSheet) {
+                player.spriteSheet = createFallbackPlayerSprite();
+                player.spriteImg = new Image();
+                player.spriteImg.src = player.spriteSheet;
+                player.spriteImg.complete = true;
+            }
+            loadedCount = requiredCount; // Force completion
+            console.log('All required images loaded (with fallbacks after timeout).');
+            resolve();
+        }, 5000);
 
         // This will be called when the player sprite is loaded
         function onPlayerSpriteLoaded() {
-            console.log('Player sprite loaded successfully:', player.spriteSheet);
+            console.log('Player sprite loaded successfully');
             loadedCount++;
+            checkIfComplete();
+        }
+
+        function checkIfComplete() {
             if (loadedCount >= requiredCount) {
                 console.log('All required images loaded.');
+                clearTimeout(loadingTimeout);
                 resolve();
             }
         }
 
+        // Create a fallback player sprite 
+        function createSimpleSpriteImage() {
+            console.log("Creating simple sprite fallback");
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 256; // 4 rows for directions
+            const ctx = canvas.getContext('2d');
+            
+            // Draw simple character
+            ['down', 'left', 'right', 'up'].forEach((direction, index) => {
+                const y = index * 64;
+                
+                // Body
+                ctx.fillStyle = 'blue';
+                ctx.fillRect(16, y + 16, 32, 32);
+                
+                // Head
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(32, y + 16, 16, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eyes
+                ctx.fillStyle = 'black';
+                
+                if (direction === 'down' || direction === 'up') {
+                    ctx.fillRect(24, y + (direction === 'down' ? 12 : 20), 6, 6);
+                    ctx.fillRect(40, y + (direction === 'down' ? 12 : 20), 6, 6);
+                } else if (direction === 'left') {
+                    ctx.fillRect(22, y + 16, 6, 6);
+                } else { // right
+                    ctx.fillRect(42, y + 16, 6, 6);
+                }
+            });
+            
+            return canvas.toDataURL();
+        }
+
         // Try to load player sprite
-        if (IMAGES.playerSprite) {
+        if (typeof IMAGES !== 'undefined' && IMAGES.playerSprite) {
             console.log('Attempting to load player sprite from IMAGES object');
             player.spriteImg = new Image();
             player.spriteImg.onload = function() {
@@ -865,7 +941,7 @@ function loadImages() {
             };
             player.spriteImg.onerror = function() {
                 console.warn('Failed to load player sprite from IMAGES object, creating fallback');
-                player.spriteSheet = createPlayerSpriteSheet();
+                player.spriteSheet = createSimpleSpriteImage();
                 player.spriteImg = new Image();
                 player.spriteImg.src = player.spriteSheet;
                 player.spriteImg.onload = onPlayerSpriteLoaded;
@@ -876,7 +952,7 @@ function loadImages() {
             setTimeout(() => {
                 if (!player.spriteImg.complete) {
                     console.warn('Player sprite load timeout, creating fallback');
-                    player.spriteSheet = createPlayerSpriteSheet();
+                    player.spriteSheet = createSimpleSpriteImage();
                     player.spriteImg = new Image();
                     player.spriteImg.src = player.spriteSheet;
                     player.spriteImg.onload = onPlayerSpriteLoaded;
@@ -884,50 +960,54 @@ function loadImages() {
             }, 3000);
         } else {
             console.log('No player sprite in IMAGES object, creating dynamic sprite sheet');
-            player.spriteSheet = createPlayerSpriteSheet();
+            player.spriteSheet = createSimpleSpriteImage();
             player.spriteImg = new Image();
             player.spriteImg.src = player.spriteSheet;
             player.spriteImg.onload = onPlayerSpriteLoaded;
         }
 
-        // Load building image
-        if (IMAGES.jobBuilding) {
+        // Load building image or use fallback
+        console.log('Handling job building image');
+        if (typeof IMAGES !== 'undefined' && IMAGES.jobBuilding) {
             console.log('Loading job building image');
             jobBuilding.img = new Image();
             jobBuilding.img.onload = function() {
                 console.log('Job building image loaded');
                 loadedCount++;
-                if (loadedCount >= requiredCount) {
-                    console.log('All required images loaded.');
-                    resolve();
-                }
+                checkIfComplete();
             };
             jobBuilding.img.onerror = function() {
                 console.warn('Failed to load job building image, using fallback');
+                jobBuilding.img = null;
                 loadedCount++; // Count it anyway, we'll draw a rectangle instead
-                if (loadedCount >= requiredCount) {
-                    console.log('All required images loaded (with fallbacks).');
-                    resolve();
-                }
+                checkIfComplete();
             };
             jobBuilding.img.src = IMAGES.jobBuilding;
+            
+            // Add a timeout for building image
+            setTimeout(() => {
+                if (jobBuilding.img && !jobBuilding.img.complete) {
+                    console.warn('Job building image load timeout, using fallback');
+                    jobBuilding.img = null;
+                    loadedCount++;
+                    checkIfComplete();
+                }
+            }, 3000);
         } else {
             console.log('No job building image in IMAGES object, will use fallback');
+            jobBuilding.img = null;
             loadedCount++; // Count it anyway, we'll draw a rectangle
-            if (loadedCount >= requiredCount) {
-                console.log('All required images loaded (with fallbacks).');
-                resolve();
-            }
+            checkIfComplete();
         }
 
-        // Load furniture images if available
-        if (IMAGES.furniture) {
+        // Load furniture images if available, but don't block on them
+        if (typeof IMAGES !== 'undefined' && IMAGES.furniture) {
             console.log('Loading furniture images');
             for (const key in IMAGES.furniture) {
                 const furnitureImg = new Image();
                 furnitureImg.src = IMAGES.furniture[key];
                 furnitureImages[key] = furnitureImg;
-                console.log(`Loaded furniture image: ${key}`);
+                console.log(`Added furniture image: ${key}`);
             }
         }
     });
@@ -1145,118 +1225,172 @@ function drawInteractionIndicator(obj, text) {
 function initGame() {
     console.log("Initializing game...");
     
-    // Get the canvas and context
-    canvas = document.getElementById('gameCanvas');
-    if (!canvas) {
-        console.error("Canvas element not found! Creating it...");
-        // Create canvas if it doesn't exist
-        canvas = document.createElement('canvas');
-        canvas.id = 'gameCanvas';
+    try {
+        // Get the canvas and context
+        canvas = document.getElementById('gameCanvas');
+        if (!canvas) {
+            console.error("Canvas element not found! Creating it...");
+            // Create canvas if it doesn't exist
+            canvas = document.createElement('canvas');
+            canvas.id = 'gameCanvas';
+            canvas.width = GAME_WIDTH;
+            canvas.height = GAME_HEIGHT;
+            
+            const gameContainer = document.getElementById('game-container');
+            if (gameContainer) {
+                gameContainer.appendChild(canvas);
+            } else {
+                console.error("Game container not found, appending to body");
+                document.body.appendChild(canvas);
+            }
+        }
+        
+        ctx = canvas.getContext('2d');
+        
+        // Display loading message
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        ctx.fillStyle = 'white';
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Loading game...', GAME_WIDTH / 2, GAME_HEIGHT / 2);
+        
+        // Ensure canvas is visible and has proper dimensions
+        canvas.style.display = "block";
         canvas.width = GAME_WIDTH;
         canvas.height = GAME_HEIGHT;
         
+        // Make sure the game container is visible
         const gameContainer = document.getElementById('game-container');
         if (gameContainer) {
-            gameContainer.appendChild(canvas);
-        } else {
-            document.body.appendChild(canvas);
-        }
-    }
-    
-    ctx = canvas.getContext('2d');
-    
-    // Ensure canvas is visible and has proper dimensions
-    canvas.style.display = "block";
-    canvas.width = GAME_WIDTH;
-    canvas.height = GAME_HEIGHT;
-    
-    // Make sure the game container is visible
-    const gameContainer = document.getElementById('game-container');
-    if (gameContainer) {
-        gameContainer.style.display = "block";
-        gameContainer.style.position = "absolute";
-        gameContainer.style.top = "50%";
-        gameContainer.style.left = "50%";
-        gameContainer.style.transform = "translate(-50%, -50%)";
-        gameContainer.style.margin = "0 auto";
-    }
-    
-    // If game is already initialized, just resume it
-    if (gameInitialized) {
-        console.log("Game already initialized, resuming");
-        
-        // Reset player position to center if coming from cutscene
-        if (gameState === "gameplay" && !player.hasBeenPositioned) {
-            console.log("Resetting player position to center");
-            player.x = (GAME_WIDTH - player.width) / 2;
-            player.y = (GAME_HEIGHT - player.height) / 2;
-            player.hasBeenPositioned = true;
+            gameContainer.style.display = "block";
+            gameContainer.style.position = "absolute";
+            gameContainer.style.top = "50%";
+            gameContainer.style.left = "50%";
+            gameContainer.style.transform = "translate(-50%, -50%)";
+            gameContainer.style.margin = "0 auto";
         }
         
-        // Ensure game loop is running
-        if (!animationFrameId) {
-            console.log("Restarting game loop");
-            requestAnimationFrame(gameLoop);
+        // If game is already initialized, just resume it
+        if (gameInitialized) {
+            console.log("Game already initialized, resuming");
+            
+            // Reset player position to center if coming from cutscene
+            if (gameState === "gameplay" && !player.hasBeenPositioned) {
+                console.log("Resetting player position to center");
+                player.x = (GAME_WIDTH - player.width) / 2;
+                player.y = (GAME_HEIGHT - player.height) / 2;
+                player.hasBeenPositioned = true;
+            }
+            
+            // Ensure game loop is running
+            if (!animationFrameId) {
+                console.log("Restarting game loop");
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }
+            
+            // Return without reinitializing
+            return;
         }
         
-        // Return without reinitializing
-        return;
+        // Force clear the canvas
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        
+        // Position player in the center of the screen
+        player.x = (GAME_WIDTH - player.width) / 2;
+        player.y = (GAME_HEIGHT - player.height) / 2;
+        player.hasBeenPositioned = true;
+        console.log(`Positioned player at ${player.x},${player.y}`);
+        
+        // Add event listeners for keyboard input
+        document.addEventListener('keydown', function(e) {
+            handleKeyDown(e);
+        });
+        document.addEventListener('keyup', function(e) {
+            handleKeyUp(e);
+        });
+        
+        // Add click event listener for interaction
+        canvas.addEventListener('click', handleCanvasClick);
+        
+        // Initialize touch controls if on mobile
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            initTouchControls();
+        }
+        
+        // Initialize obstacles
+        initObstacles();
+        
+        // Load images with timeout protection
+        const imageLoadingPromise = new Promise((resolve, reject) => {
+            // Add timeout protection
+            const timeout = setTimeout(() => {
+                console.warn("Image loading timed out globally!");
+                resolve(); // Resolve anyway to continue with fallbacks
+            }, 8000);
+            
+            // Try to load images normally
+            loadImages()
+                .then(() => {
+                    clearTimeout(timeout);
+                    resolve();
+                })
+                .catch(error => {
+                    clearTimeout(timeout);
+                    console.error("Error during image loading:", error);
+                    resolve(); // Continue anyway
+                });
+        });
+        
+        // Continue with game initialization after image loading (success or failure)
+        imageLoadingPromise.then(() => {
+            // Initialize inventory
+            initInventory();
+            
+            // Create or update stats display
+            updateStatsDisplay();
+            
+            // Set initial timestamp to avoid large first frame delta
+            lastTime = performance.now();
+            
+            // Show ready message on canvas
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            ctx.fillStyle = 'white';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Game Ready!', GAME_WIDTH / 2, GAME_HEIGHT / 2);
+            
+            // Start the game loop after a short delay to show the ready message
+            setTimeout(() => {
+                gameInitialized = true;
+                console.log("Game initialized successfully, starting game loop");
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }, 500);
+        });
+    } catch (error) {
+        console.error("Critical error during game initialization:", error);
+        
+        // Create an error message on screen if possible
+        if (canvas && ctx) {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            ctx.fillStyle = 'red';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Game initialization error!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20);
+            ctx.fillText(error.message, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20);
+            ctx.fillText('Please refresh the page to try again.', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60);
+        }
+        
+        // Try to show an alert as a last resort
+        try {
+            alert("Game initialization error: " + error.message);
+        } catch (alertError) {
+            // Nothing more we can do
+        }
     }
-    
-    // Force clear the canvas
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    
-    // Position player in the center of the screen
-    player.x = (GAME_WIDTH - player.width) / 2;
-    player.y = (GAME_HEIGHT - player.height) / 2;
-    player.hasBeenPositioned = true;
-    console.log(`Positioned player at ${player.x},${player.y}`);
-    
-    // Add event listeners for keyboard input
-    document.addEventListener('keydown', function(e) {
-        handleKeyDown(e);
-    });
-    document.addEventListener('keyup', function(e) {
-        handleKeyUp(e);
-    });
-    
-    // Add click event listener for interaction
-    canvas.addEventListener('click', handleCanvasClick);
-    
-    // Initialize touch controls if on mobile
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        initTouchControls();
-    }
-    
-    // Initialize obstacles
-    initObstacles();
-    
-    // Load images
-    loadImages().then(() => {
-        // Initialize inventory
-        initInventory();
-        
-        // Create or update stats display
-        updateStatsDisplay();
-        
-        // Set initial timestamp to avoid large first frame delta
-        lastTime = performance.now();
-        
-        // Start the game loop
-        gameInitialized = true;
-        console.log("Game initialized successfully, starting game loop");
-        animationFrameId = requestAnimationFrame(gameLoop);
-    }).catch(error => {
-        console.error("Error during image loading:", error);
-        // Continue anyway, we'll use fallbacks
-        initInventory();
-        updateStatsDisplay();
-        lastTime = performance.now();
-        gameInitialized = true;
-        console.log("Game initialized with fallbacks");
-        animationFrameId = requestAnimationFrame(gameLoop);
-    });
 }
 
 // Handle key down events
