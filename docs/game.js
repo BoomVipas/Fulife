@@ -97,8 +97,8 @@ let playerStats = {
 
 // Player
 const player = {
-    x: canvas.width / 2 - PLAYER_SIZE / 2,
-    y: canvas.height / 2 - PLAYER_SIZE / 2,
+    x: 0, // This will be set properly in initGame
+    y: 0, // This will be set properly in initGame
     width: PLAYER_SIZE,
     height: PLAYER_SIZE,
     speed: PLAYER_SPEED,
@@ -204,8 +204,12 @@ const player = {
 
     // Player draw method
     draw: function() {
+        // Always draw a colored rectangle first as a fallback base
+        ctx.fillStyle = '#2196F3'; // Blue rectangle as base
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        
         try {
-            if (this.spriteImg && this.spriteImg.complete) {
+            if (this.spriteImg && this.spriteImg.complete && this.spriteSheet) {
                 // Use the sprite sheet for drawing
                 // Each frame is 108x144 pixels in our sprite sheet
                 const frameWidth = 108;
@@ -230,52 +234,62 @@ const player = {
                 const sy = directionIndex * frameHeight;
                 
                 // Draw the player sprite
-                ctx.drawImage(
-                    this.spriteImg,
-                    sx, sy, frameWidth, frameHeight,  // Source rectangle
-                    this.x, this.y, this.width, this.height  // Destination rectangle
-                );
-                
-                // Draw player debug info if debug mode is on
-                if (window.location.hash === '#debug') {
-                    ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-                    ctx.fillStyle = 'white';
-                    ctx.font = '10px Arial';
-                    ctx.fillText(`X: ${Math.round(this.x)}, Y: ${Math.round(this.y)}`, this.x, this.y - 5);
+                try {
+                    ctx.drawImage(
+                        this.spriteImg,
+                        sx, sy, frameWidth, frameHeight,  // Source rectangle
+                        this.x, this.y, this.width, this.height  // Destination rectangle
+                    );
+                } catch (err) {
+                    console.error("Error drawing sprite with drawImage:", err);
+                    // Already drew the blue rectangle as fallback
                 }
             } else {
-                // Fallback: draw a blue rectangle with eyes to indicate direction
-                ctx.fillStyle = '#2196F3';
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-                
                 // Draw eyes to indicate facing direction
                 ctx.fillStyle = 'white';
-                const eyeSize = 5;
+                const eyeSize = 10;
+                const eyeOffset = 5;
                 
                 if (this.facing === 'down') {
                     ctx.fillRect(this.x + this.width / 3 - eyeSize / 2, this.y + this.height / 4, eyeSize, eyeSize);
                     ctx.fillRect(this.x + 2 * this.width / 3 - eyeSize / 2, this.y + this.height / 4, eyeSize, eyeSize);
+                    // Draw a mouth
+                    ctx.fillRect(this.x + this.width / 4, this.y + this.height / 2, this.width / 2, eyeSize / 2);
                 } else if (this.facing === 'up') {
                     ctx.fillRect(this.x + this.width / 3 - eyeSize / 2, this.y + this.height / 5, eyeSize, eyeSize);
                     ctx.fillRect(this.x + 2 * this.width / 3 - eyeSize / 2, this.y + this.height / 5, eyeSize, eyeSize);
                 } else if (this.facing === 'right') {
                     ctx.fillRect(this.x + 2 * this.width / 3, this.y + this.height / 4, eyeSize, eyeSize);
+                    // Draw a small line for a side profile
+                    ctx.fillRect(this.x + this.width - eyeOffset, this.y + this.height / 3, eyeSize / 2, this.height / 3);
                 } else if (this.facing === 'left') {
                     ctx.fillRect(this.x + this.width / 3 - eyeSize, this.y + this.height / 4, eyeSize, eyeSize);
-                }
-                
-                if (window.location.hash === '#debug') {
-                    ctx.fillStyle = 'white';
-                    ctx.font = '10px Arial';
-                    ctx.fillText(`X: ${Math.round(this.x)}, Y: ${Math.round(this.y)}`, this.x, this.y - 5);
+                    // Draw a small line for a side profile
+                    ctx.fillRect(this.x, this.y + this.height / 3, eyeSize / 2, this.height / 3);
                 }
             }
+            
+            // Draw player debug info if debug mode is on
+            if (window.location.hash === '#debug') {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.fillStyle = 'white';
+                ctx.font = '10px Arial';
+                ctx.fillText(`X: ${Math.round(this.x)}, Y: ${Math.round(this.y)}`, this.x, this.y - 5);
+            }
         } catch (error) {
-            console.error('Error drawing player:', error);
-            // Ultimate fallback: just draw a red rectangle
+            console.error('Error in player.draw:', error);
+            // Ultimate fallback: draw a red rectangle with an X
             ctx.fillStyle = 'red';
             ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x + this.width, this.y + this.height);
+            ctx.moveTo(this.x + this.width, this.y);
+            ctx.lineTo(this.x, this.y + this.height);
+            ctx.stroke();
         }
     }
 };
@@ -1131,37 +1145,22 @@ function drawInteractionIndicator(obj, text) {
 function initGame() {
     console.log("Initializing game...");
     
-    // If game is already initialized, just resume it
-    if (gameInitialized) {
-        console.log("Game already initialized, resuming");
-        
-        // Make sure the game container and canvas are visible
-        const gameContainer = document.getElementById('game-container');
-        if (gameContainer) {
-            gameContainer.style.display = "block";
-        }
-        
-        const canvas = document.getElementById('gameCanvas');
-        if (canvas) {
-            canvas.style.display = "block";
-        }
-        
-        // Reset player position to center if coming from cutscene
-        if (gameState === "gameplay" && !player.hasBeenPositioned) {
-            player.x = (GAME_WIDTH - player.width) / 2;
-            player.y = (GAME_HEIGHT - player.height) / 2;
-            player.hasBeenPositioned = true;
-        }
-        
-        // Return without reinitializing
-        return;
-    }
-    
     // Get the canvas and context
     canvas = document.getElementById('gameCanvas');
     if (!canvas) {
-        console.error("Canvas element not found!");
-        return;
+        console.error("Canvas element not found! Creating it...");
+        // Create canvas if it doesn't exist
+        canvas = document.createElement('canvas');
+        canvas.id = 'gameCanvas';
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+        
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+            gameContainer.appendChild(canvas);
+        } else {
+            document.body.appendChild(canvas);
+        }
     }
     
     ctx = canvas.getContext('2d');
@@ -1171,10 +1170,48 @@ function initGame() {
     canvas.width = GAME_WIDTH;
     canvas.height = GAME_HEIGHT;
     
+    // Make sure the game container is visible
+    const gameContainer = document.getElementById('game-container');
+    if (gameContainer) {
+        gameContainer.style.display = "block";
+        gameContainer.style.position = "absolute";
+        gameContainer.style.top = "50%";
+        gameContainer.style.left = "50%";
+        gameContainer.style.transform = "translate(-50%, -50%)";
+        gameContainer.style.margin = "0 auto";
+    }
+    
+    // If game is already initialized, just resume it
+    if (gameInitialized) {
+        console.log("Game already initialized, resuming");
+        
+        // Reset player position to center if coming from cutscene
+        if (gameState === "gameplay" && !player.hasBeenPositioned) {
+            console.log("Resetting player position to center");
+            player.x = (GAME_WIDTH - player.width) / 2;
+            player.y = (GAME_HEIGHT - player.height) / 2;
+            player.hasBeenPositioned = true;
+        }
+        
+        // Ensure game loop is running
+        if (!animationFrameId) {
+            console.log("Restarting game loop");
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Return without reinitializing
+        return;
+    }
+    
+    // Force clear the canvas
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    
     // Position player in the center of the screen
     player.x = (GAME_WIDTH - player.width) / 2;
     player.y = (GAME_HEIGHT - player.height) / 2;
     player.hasBeenPositioned = true;
+    console.log(`Positioned player at ${player.x},${player.y}`);
     
     // Add event listeners for keyboard input
     document.addEventListener('keydown', function(e) {
@@ -1209,7 +1246,16 @@ function initGame() {
         // Start the game loop
         gameInitialized = true;
         console.log("Game initialized successfully, starting game loop");
-        requestAnimationFrame(gameLoop);
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }).catch(error => {
+        console.error("Error during image loading:", error);
+        // Continue anyway, we'll use fallbacks
+        initInventory();
+        updateStatsDisplay();
+        lastTime = performance.now();
+        gameInitialized = true;
+        console.log("Game initialized with fallbacks");
+        animationFrameId = requestAnimationFrame(gameLoop);
     });
 }
 

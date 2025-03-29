@@ -151,50 +151,70 @@ function startGameplay() {
     console.log("Starting gameplay...");
     
     // Hide cutscene container
-    document.getElementById("cutsceneContainer").style.display = "none";
+    const cutsceneContainer = document.getElementById("cutsceneContainer");
+    if (cutsceneContainer) {
+        cutsceneContainer.style.display = "none";
+    }
     
-    // Show game container
+    // Show and position game container
     const gameContainer = document.getElementById("game-container");
-    gameContainer.style.display = "block";
+    if (gameContainer) {
+        gameContainer.style.display = "block";
+        
+        // Ensure game container is properly positioned
+        gameContainer.style.position = "absolute";
+        gameContainer.style.top = "50%";
+        gameContainer.style.left = "50%";
+        gameContainer.style.transform = "translate(-50%, -50%)";
+        gameContainer.style.margin = "0 auto";
+        gameContainer.style.boxShadow = "0 0 20px rgba(0, 0, 0, 0.5)";
+        gameContainer.style.zIndex = "10";
+    }
     
-    // Ensure game container is properly positioned
-    gameContainer.style.position = "absolute";
-    gameContainer.style.top = "50%";
-    gameContainer.style.left = "50%";
-    gameContainer.style.transform = "translate(-50%, -50%)";
-    gameContainer.style.margin = "0 auto";
-    
-    // Make sure canvas is visible
+    // Make sure canvas is visible and properly sized
     const canvas = document.getElementById("gameCanvas");
     if (canvas) {
         canvas.style.display = "block";
         canvas.width = 800;
         canvas.height = 600;
+        
+        // Force a black background to avoid white flash
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
     }
     
     // Switch to gameplay state
     gameState = "gameplay";
     
-    // Reset player position flag to ensure they appear in center after cutscene
-    if (typeof player !== 'undefined') {
-        player.hasBeenPositioned = false;
-    }
-    
-    // Initialize the game
-    if (typeof initGame === 'function') {
-        console.log("Calling initGame function");
-        initGame(); // This calls the existing game.js initGame function
+    // Add a small delay before initializing the game to ensure DOM is ready
+    setTimeout(() => {
+        console.log("Delayed initialization starting...");
         
-        // Ensure the game loop is started
-        if (typeof gameLoop === 'function' && !gameInitialized) {
-            requestAnimationFrame(gameLoop);
+        // Reset player position flag to ensure they appear in center after cutscene
+        if (typeof player !== 'undefined') {
+            player.hasBeenPositioned = false;
         }
-    } else {
-        console.error("initGame function not found!");
-    }
-    
-    // Create the Tech CEO NPC encounter after a delay
-    setTimeout(createTechCEOEncounter, 8000); // Longer delay to give time to explore
+        
+        // Initialize the game
+        if (typeof initGame === 'function') {
+            console.log("Calling initGame function");
+            initGame(); // This calls the game.js initGame function
+            
+            // Ensure the game loop is started
+            if (typeof gameLoop === 'function' && !gameInitialized) {
+                requestAnimationFrame(gameLoop);
+            }
+            
+            // Create the Tech CEO NPC encounter after a delay
+            // Longer delay to give time to explore and for the game to stabilize
+            setTimeout(createTechCEOEncounter, 8000);
+        } else {
+            console.error("initGame function not found!");
+        }
+    }, 100);
 }
 
 // Function to create the Tech CEO NPC encounter
