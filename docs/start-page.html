@@ -97,6 +97,7 @@
             gap: 2rem;
             width: 80%;
             max-width: 1000px;
+            max-height: 80vh;
         }
         
         .character-preview {
@@ -104,6 +105,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: sticky;
+            top: 0;
         }
         
         .character-options {
@@ -111,6 +114,24 @@
             padding: 20px;
             background-color: #222;
             border-radius: 10px;
+            max-height: 70vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #555 #222;
+        }
+        
+        .character-options::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .character-options::-webkit-scrollbar-track {
+            background: #222;
+        }
+        
+        .character-options::-webkit-scrollbar-thumb {
+            background-color: #555;
+            border-radius: 6px;
+            border: 2px solid #222;
         }
         
         .option-group {
@@ -150,6 +171,8 @@
             cursor: pointer;
             font-size: 1.2rem;
             margin-top: 20px;
+            position: sticky;
+            bottom: 20px;
             float: right;
         }
     </style>
@@ -188,70 +211,75 @@
     
     <!-- Character Customization Container -->
     <div id="customizationContainer" class="game-screen" style="display: none;">
-        <div class="character-preview">
-            <div style="width: 160px; height: 200px; background-color: #ddd; margin-bottom: 20px;">
-                <!-- Character preview would go here -->
-                <img id="characterPreview" src="images/player_sprite.png" alt="Character" style="width: 100%;">
+        <div class="character-customization">
+            <div class="character-preview">
+                <div style="width: 160px; height: 200px; background-color: #ddd; margin-bottom: 20px;">
+                    <!-- Character preview would go here -->
+                    <img id="characterPreview" src="images/player_sprite.png" alt="Character" style="width: 100%;">
+                </div>
+                <input type="text" id="playerName" placeholder="Your Name" style="padding: 8px; margin-bottom: 10px; width: 80%;">
             </div>
-            <input type="text" id="playerName" placeholder="Your Name" style="padding: 8px; margin-bottom: 10px; width: 80%;">
-        </div>
-        <div class="character-options">
-            <h2>Customize Your Character</h2>
-            <p>Customize your appearance before starting your new life adventure.</p>
-            
-            <div class="option-group">
-                <h3>Hair Style</h3>
-                <div class="slider-container">
-                    <label for="hairSlider">Style: <span id="hairValue">3</span></label>
-                    <input type="range" id="hairSlider" min="1" max="5" value="3"
-                        onchange="document.getElementById('hairValue').textContent = this.value">
+            <div class="character-options">
+                <h2>Customize Your Character</h2>
+                <p>Customize your appearance before starting your new life adventure.</p>
+                
+                <div class="option-group">
+                    <h3>Hair Style</h3>
+                    <div class="slider-container">
+                        <label for="hairSlider">Style: <span id="hairValue">3</span></label>
+                        <input type="range" id="hairSlider" min="1" max="5" value="3"
+                            onchange="document.getElementById('hairValue').textContent = this.value">
+                    </div>
+                    <label>Hair Color:</label>
+                    <div class="color-options">
+                        <div class="color-option selected" style="background-color: #000000;"></div>
+                        <div class="color-option" style="background-color: #8B4513;"></div>
+                        <div class="color-option" style="background-color: #FFD700;"></div>
+                        <div class="color-option" style="background-color: #A9A9A9;"></div>
+                    </div>
                 </div>
-                <label>Hair Color:</label>
-                <div class="color-options">
-                    <div class="color-option selected" style="background-color: #000000;"></div>
-                    <div class="color-option" style="background-color: #8B4513;"></div>
-                    <div class="color-option" style="background-color: #FFD700;"></div>
-                    <div class="color-option" style="background-color: #A9A9A9;"></div>
+                
+                <div class="option-group">
+                    <h3>Shirt</h3>
+                    <div class="slider-container">
+                        <label for="shirtSlider">Style: <span id="shirtValue">2</span></label>
+                        <input type="range" id="shirtSlider" min="1" max="4" value="2"
+                            onchange="document.getElementById('shirtValue').textContent = this.value">
+                    </div>
+                    <label>Shirt Color:</label>
+                    <div class="color-options">
+                        <div class="color-option" style="background-color: #FF0000;"></div>
+                        <div class="color-option selected" style="background-color: #0000FF;"></div>
+                        <div class="color-option" style="background-color: #008000;"></div>
+                        <div class="color-option" style="background-color: #800080;"></div>
+                    </div>
+                </div>
+                
+                <div class="option-group">
+                    <h3>Pants</h3>
+                    <div class="slider-container">
+                        <label for="pantsSlider">Style: <span id="pantsValue">1</span></label>
+                        <input type="range" id="pantsSlider" min="1" max="3" value="1"
+                            onchange="document.getElementById('pantsValue').textContent = this.value">
+                    </div>
+                    <label>Pants Color:</label>
+                    <div class="color-options">
+                        <div class="color-option" style="background-color: #000080;"></div>
+                        <div class="color-option selected" style="background-color: #000000;"></div>
+                        <div class="color-option" style="background-color: #8B4513;"></div>
+                        <div class="color-option" style="background-color: #808080;"></div>
+                    </div>
+                </div>
+                
+                <div style="height: 60px; position: relative; clear: both;">
+                    <button id="startGameButton" class="start-button" onclick="startCutscene()">START</button>
                 </div>
             </div>
-            
-            <div class="option-group">
-                <h3>Shirt</h3>
-                <div class="slider-container">
-                    <label for="shirtSlider">Style: <span id="shirtValue">2</span></label>
-                    <input type="range" id="shirtSlider" min="1" max="4" value="2"
-                        onchange="document.getElementById('shirtValue').textContent = this.value">
-                </div>
-                <label>Shirt Color:</label>
-                <div class="color-options">
-                    <div class="color-option" style="background-color: #FF0000;"></div>
-                    <div class="color-option selected" style="background-color: #0000FF;"></div>
-                    <div class="color-option" style="background-color: #008000;"></div>
-                    <div class="color-option" style="background-color: #800080;"></div>
-                </div>
-            </div>
-            
-            <div class="option-group">
-                <h3>Pants</h3>
-                <div class="slider-container">
-                    <label for="pantsSlider">Style: <span id="pantsValue">1</span></label>
-                    <input type="range" id="pantsSlider" min="1" max="3" value="1"
-                        onchange="document.getElementById('pantsValue').textContent = this.value">
-                </div>
-                <label>Pants Color:</label>
-                <div class="color-options">
-                    <div class="color-option" style="background-color: #000080;"></div>
-                    <div class="color-option selected" style="background-color: #000000;"></div>
-                    <div class="color-option" style="background-color: #8B4513;"></div>
-                    <div class="color-option" style="background-color: #808080;"></div>
-                </div>
-            </div>
-            
-            <button class="start-button" onclick="startCutscene()">START</button>
         </div>
     </div>
 
     <!-- Game Scripts -->
+    <script src="init.js"></script>
     <script src="images.js"></script>
     <script src="start-page.js"></script>
 </body>

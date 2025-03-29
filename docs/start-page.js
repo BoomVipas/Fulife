@@ -114,38 +114,90 @@ function setupCustomizationListeners() {
             this.classList.add('selected');
         });
     });
+    
+    // Add event listener for start button (as a backup to onclick)
+    const startButton = document.querySelector('.start-button');
+    if (startButton) {
+        console.log("Adding event listener to start button");
+        startButton.addEventListener('click', function(e) {
+            console.log("Start button clicked via event listener");
+            startCutscene();
+        });
+    } else {
+        console.warn("Start button not found during initialization");
+    }
 }
 
 // Function to start the game after customization
 function startCutscene() {
-    // Save player name if entered
-    const playerNameInput = document.getElementById("playerName");
-    if (playerNameInput && playerNameInput.value) {
-        localStorage.setItem("playerName", playerNameInput.value);
-    } else {
-        localStorage.setItem("playerName", "Player");
+    try {
+        console.log("Start button clicked - entering startCutscene function");
+        
+        // Save player name if entered
+        const playerNameInput = document.getElementById("playerName");
+        let playerName = "Player"; // Default name
+        
+        if (playerNameInput && playerNameInput.value.trim()) {
+            playerName = playerNameInput.value.trim();
+            console.log("Player name set to:", playerName);
+        } else {
+            console.log("Using default player name");
+        }
+        
+        localStorage.setItem("playerName", playerName);
+        
+        // Save customization options - with error handling
+        try {
+            const hairStyle = document.getElementById("hairSlider").value;
+            const hairColorElement = document.querySelector('.option-group:nth-child(1) .color-option.selected');
+            const hairColor = hairColorElement ? hairColorElement.style.backgroundColor : "#000000";
+            
+            const shirtStyle = document.getElementById("shirtSlider").value;
+            const shirtColorElement = document.querySelector('.option-group:nth-child(2) .color-option.selected');
+            const shirtColor = shirtColorElement ? shirtColorElement.style.backgroundColor : "#0000FF";
+            
+            const pantsStyle = document.getElementById("pantsSlider").value;
+            const pantsColorElement = document.querySelector('.option-group:nth-child(3) .color-option.selected');
+            const pantsColor = pantsColorElement ? pantsColorElement.style.backgroundColor : "#000000";
+            
+            localStorage.setItem("playerHairStyle", hairStyle);
+            localStorage.setItem("playerHairColor", hairColor);
+            localStorage.setItem("playerShirtStyle", shirtStyle);
+            localStorage.setItem("playerShirtColor", shirtColor);
+            localStorage.setItem("playerPantsStyle", pantsStyle);
+            localStorage.setItem("playerPantsColor", pantsColor);
+            
+            console.log("Saved player customization data to localStorage");
+        } catch (error) {
+            console.error("Error saving customization options:", error);
+            // Continue anyway - we'll use defaults if needed
+        }
+        
+        // Redirect to cutscene page with error handling
+        console.log("Redirecting to cutscene-page.html");
+        
+        // Use a small timeout to ensure localStorage is saved before navigation
+        setTimeout(function() {
+            window.location.href = "cutscene-page.html";
+        }, 100);
+    } catch (error) {
+        console.error("Critical error in startCutscene function:", error);
+        alert("An error occurred when starting the game. Please check the console for details.");
+        
+        // Try direct redirect as fallback
+        setTimeout(function() {
+            window.location.href = "cutscene-page.html";
+        }, 1000);
     }
-    
-    // Save customization options
-    const hairStyle = document.getElementById("hairSlider").value;
-    const hairColor = document.querySelector('.option-group:nth-child(1) .color-option.selected').style.backgroundColor;
-    const shirtStyle = document.getElementById("shirtSlider").value;
-    const shirtColor = document.querySelector('.option-group:nth-child(2) .color-option.selected').style.backgroundColor;
-    const pantsStyle = document.getElementById("pantsSlider").value;
-    const pantsColor = document.querySelector('.option-group:nth-child(3) .color-option.selected').style.backgroundColor;
-    
-    localStorage.setItem("playerHairStyle", hairStyle);
-    localStorage.setItem("playerHairColor", hairColor);
-    localStorage.setItem("playerShirtStyle", shirtStyle);
-    localStorage.setItem("playerShirtColor", shirtColor);
-    localStorage.setItem("playerPantsStyle", pantsStyle);
-    localStorage.setItem("playerPantsColor", pantsColor);
-    
-    // Redirect to cutscene page
-    window.location.href = "cutscene-page.html";
 }
 
 // Initialize when the window loads
 window.addEventListener("load", function() {
     initStartScreen();
+    
+    // Add a direct event listener to the start button
+    document.getElementById("startGameButton")?.addEventListener("click", function() {
+        console.log("Start button clicked via ID-based event listener");
+        startCutscene();
+    });
 }); 

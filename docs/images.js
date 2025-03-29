@@ -24,3 +24,100 @@ const IMAGES = {
     // Simple bookshelf
     bookshelf: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAA8CAYAAAAUufjgAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAGiSURBVGiB7ZkxbsIwFIY/O0OHDh06dOjQpUOHju1SiTPkCrkDV+hcqTdg7MKCC1RduvWkpaqQ4qEvQ1VVsZ34xSYtkr9kyX7P/t6zYr04IoIxl8YOY6YLNA1wbYAGaBqgaYCmAZoGaLrAbkSkBWwzDPFDRPphsBKR9AkM6APXmZpvg3ELvNUFWLX3tsiEiGBSF2CV77V2XYB9zjOQARE5Aq9pfP6dxHO3bYAGaBqgaYCmAZoGaBqgaYCmAZoqp7kEz3kL/Ah85WTPOW+BjYgMA6RVASYdI+e8c0CE8Yl90QgN99oOJCLCfr9nNpuxWq2YTqd8fX3x+flJv99nPB7TarW4ubnh/v6ebrf7rY+qO5glyXq9ptPpMJlMeHh44PHxkdFodCj3fZ/Hx0eGwyGLxYLlcsl2uyVpmktCVAdM05TdbserDJ+fn5nNZvR6vd91wzCk3W6f9I+iiOl0ynw+p9PpnPStesV/6/7+noeHBx4eHlgul6dlItIRkbeMLRYRGcQxTETiOPbFcXycRK9qDIvIi4iMYh9fJCJRHPsiIn5JXtH51YVbXLh1M8CLzv8LB3jpekgJndMAAAAASUVORK5CYII="
 }; 
+
+// Define fallback image loading function that creates simple images if real ones can't be loaded
+function loadImages() {
+    console.log("Loading images...");
+    return new Promise((resolve) => {
+        // Create fallback player sprite if needed
+        if (!window.player.spriteImg || !window.player.spriteSheet) {
+            console.log("Creating fallback player sprite");
+            window.player.spriteSheet = createFallbackPlayerSprite();
+            window.player.spriteImg = new Image();
+            window.player.spriteImg.src = window.player.spriteSheet;
+        }
+        
+        // Load job building image
+        if (window.jobBuilding && !window.jobBuilding.img) {
+            window.jobBuilding.img = createSimpleBuildingImage();
+        }
+        
+        console.log("Image loading complete (with fallbacks if needed)");
+        resolve();
+    });
+}
+
+// Create a simple player sprite as fallback
+function createFallbackPlayerSprite() {
+    console.log("Creating fallback player sprite");
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 256; // 4 rows for directions
+    const ctx = canvas.getContext('2d');
+    
+    // Draw simple character for each direction (down, up, left, right)
+    ['down', 'up', 'left', 'right'].forEach((direction, index) => {
+        const y = index * 64;
+        
+        // Body
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(16, y + 16, 32, 32);
+        
+        // Head
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(32, y + 16, 16, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Eyes
+        ctx.fillStyle = 'black';
+        
+        if (direction === 'down' || direction === 'up') {
+            ctx.fillRect(24, y + (direction === 'down' ? 12 : 20), 6, 6);
+            ctx.fillRect(40, y + (direction === 'down' ? 12 : 20), 6, 6);
+        } else if (direction === 'left') {
+            ctx.fillRect(22, y + 16, 6, 6);
+        } else { // right
+            ctx.fillRect(42, y + 16, 6, 6);
+        }
+    });
+    
+    return canvas.toDataURL();
+}
+
+// Create a simple building image as fallback
+function createSimpleBuildingImage() {
+    console.log("Creating fallback building image");
+    const canvas = document.createElement('canvas');
+    canvas.width = 150;
+    canvas.height = 100;
+    const ctx = canvas.getContext('2d');
+    
+    // Building base
+    ctx.fillStyle = '#4CAF50';
+    ctx.fillRect(0, 0, 150, 100);
+    
+    // Door
+    ctx.fillStyle = '#333';
+    ctx.fillRect(60, 60, 30, 40);
+    
+    // Windows
+    ctx.fillRect(20, 30, 25, 20);
+    ctx.fillRect(105, 30, 25, 20);
+    
+    // Roof
+    ctx.fillStyle = '#795548';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(75, -30);
+    ctx.lineTo(150, 0);
+    ctx.closePath();
+    ctx.fill();
+    
+    return canvas.toDataURL();
+}
+
+// Make sure these functions are available globally
+window.createFallbackPlayerSprite = createFallbackPlayerSprite;
+window.createSimpleBuildingImage = createSimpleBuildingImage;
+window.loadImages = loadImages; 

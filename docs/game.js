@@ -1,63 +1,59 @@
 // Game constants
-const GAME_WIDTH = 800;
-const GAME_HEIGHT = 600;
-const PLAYER_SIZE = 64;
-const PLAYER_SPEED = 5;
-const INVENTORY_SLOTS = 9;
-const INTERACTION_DISTANCE = 60;
+window.GAME_WIDTH = 800;
+window.GAME_HEIGHT = 600;
+window.PLAYER_SIZE = 64;
+window.PLAYER_SPEED = 1;
+window.INVENTORY_SLOTS = 9;
+window.INTERACTION_DISTANCE = 60;
 
 // Game state
-let gameState = "gameplay"; // gameplay, working, minigame
-let interactingWith = null;
-let canvas, ctx;
-let lastTime = 0;
-let gameInitialized = false;
-let inDialogMode = false;
-let animationFrameId = null;
-let furnitureImages = {};
-let workMinigame = null;
-
-// Logic Gates Minigame variables
-let logicGateMinigame = null;
+window.gameState = "gameplay"; // gameplay, working, minigame
+// Use the global interactingWith declared in init.js
+// let interactingWith = null;
+// Use global canvas and ctx variables declared in init.js
+// let canvas, ctx;
+// Use global lastTime variable
+// let lastTime = 0;
+// Use global variables declared in init.js
+// let gameInitialized = false;
+// let inDialogMode = false;
+// let animationFrameId = null;
+// let furnitureImages = {};
+// let workMinigame = null;
+// let logicGateMinigame = null;
 
 // Input state
-const touchControls = {
-    up: false, 
-    down: false, 
-    left: false, 
-    right: false,
-    action: false, 
-    inventory: false
-};
-
-const keys = {
-    w: false,
-    a: false,
-    s: false,
-    d: false,
-    ArrowUp: false, 
-    ArrowDown: false, 
-    ArrowLeft: false, 
-    ArrowRight: false,
-    e: false,
-    i: false
-};
+// Use the global keys object instead of declaring a new one
+// const keys = {
+//     w: false,
+//     a: false,
+//     s: false,
+//     d: false,
+//     ArrowUp: false, 
+//     ArrowDown: false, 
+//     ArrowLeft: false, 
+//     ArrowRight: false,
+//     e: false,
+//     i: false
+// };
 
 // Image objects
-const imageObjects = {};
+// Using global window.imageObjects from init.js instead of declaring locally
+// const imageObjects = {};
 
 // Job building object
-const jobBuilding = {
+// Use global window.jobBuilding instead of const declaration
+window.jobBuilding = {
     x: 600,
     y: 300,
     width: 150,
     height: 100,
     color: "#4CAF50",
     name: "Tech Company",
-    img: null,
+    img: null, // Will be set properly during initialization
     
     draw: function() {
-        if (this.img && this.img.complete) {
+        if (this.img && this.img.complete && this.img.naturalWidth !== 0) {
             ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
         } else {
             // Fallback: draw a colored rectangle
@@ -69,6 +65,12 @@ const jobBuilding = {
             ctx.fillRect(this.x + 20, this.y + 40, 30, 60); // Door
             ctx.fillRect(this.x + 70, this.y + 20, 30, 30); // Window
             ctx.fillRect(this.x + 110, this.y + 20, 30, 30); // Window
+            
+            // Log the missing image
+            if (!this._logged) {
+                console.warn("No job building image, using fallback drawing");
+                this._logged = true;
+            }
         }
         
         // Draw name above building
@@ -82,21 +84,52 @@ const jobBuilding = {
 
 // Draw job building
 function drawJobBuilding() {
-    jobBuilding.draw();
+    try {
+        // Ensure we have a building image
+        const buildingImg = createBuildingImage();
+        
+        // Draw each building
+        for (const building of buildings) {
+            if (buildingImg && buildingImg.complete) {
+                ctx.drawImage(buildingImg, building.x, building.y, building.width, building.height);
+            } else {
+                // Fallback to rectangle if image not loaded
+                ctx.fillStyle = '#555555';
+                ctx.fillRect(building.x, building.y, building.width, building.height);
+                
+                // Add basic door
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(building.x + building.width/2 - 15, building.y + building.height - 30, 30, 30);
+            }
+            
+            // Add building name
+            ctx.fillStyle = 'white';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(building.name, building.x + building.width/2, building.y - 10);
+        }
+    } catch (e) {
+        console.error("Error drawing job building:", e);
+        // Fallback to basic rectangles
+        for (const building of buildings) {
+            ctx.fillStyle = '#555555';
+            ctx.fillRect(building.x, building.y, building.width, building.height);
+        }
+    }
 }
 
-// Player stats
-let playerStats = {
-    education: 10,
-    career: 5,
-    happiness: 50,
-    health: 100,
-    money: 1000,
-    inventory: []
-};
+// Player stats - use global window.playerStats instead of local declaration
+// let playerStats = {
+//     education: 10,
+//     career: 5,
+//     happiness: 50,
+//     health: 100,
+//     money: 1000,
+//     inventory: []
+// };
 
-// Player
-const player = {
+// Player - use global window.player instead of creating a new one
+window.player = {
     x: 0, // This will be set properly in initGame
     y: 0, // This will be set properly in initGame
     width: PLAYER_SIZE,
@@ -106,32 +139,29 @@ const player = {
     isMoving: false,
     hasBeenPositioned: false,
     inventory: [],
-    spriteImg: null,
-    spriteSheet: null,
-    
-    // Draw method defined separately
+    spriteImg: window.imageObjects.playerSprite, // Use the preloaded image
     
     // Update movement
     update: function(deltaTime) {
         let moved = false;
         
-        // Update player position based on active keys
-        if (keys.ArrowUp || keys.w) {
+        // Update player position based on active keys and touch controls
+        if (window.keys.ArrowUp || window.keys.w || window.touchControls.up) {
             this.y -= this.speed * deltaTime;
             this.facing = 'up';
             moved = true;
         }
-        if (keys.ArrowDown || keys.s) {
+        if (window.keys.ArrowDown || window.keys.s || window.touchControls.down) {
             this.y += this.speed * deltaTime;
             this.facing = 'down';
             moved = true;
         }
-        if (keys.ArrowLeft || keys.a) {
+        if (window.keys.ArrowLeft || window.keys.a || window.touchControls.left) {
             this.x -= this.speed * deltaTime;
             this.facing = 'left';
             moved = true;
         }
-        if (keys.ArrowRight || keys.d) {
+        if (window.keys.ArrowRight || window.keys.d || window.touchControls.right) {
             this.x += this.speed * deltaTime;
             this.facing = 'right';
             moved = true;
@@ -158,13 +188,13 @@ const player = {
         }
         
         // Check for NPC interactions
-        if (interactingWith === null) {
+        if (window.interactingWith === null) {
             for (let i = 0; i < npcs.length; i++) {
                 if (checkCollision(this, npcs[i])) {
                     // Start interaction if E is pressed
-                    if (keys.e) {
+                    if (window.keys.e) {
                         startDialog(npcs[i]);
-                        keys.e = false; // Reset E key to prevent multiple triggers
+                        window.keys.e = false; // Reset E key to prevent multiple triggers
                     }
                 }
             }
@@ -186,9 +216,9 @@ const player = {
         
         // Check job building interaction
         if (checkCollision(this, jobBuilding)) {
-            if (keys.e) {
+            if (window.keys.e) {
                 startWork();
-                keys.e = false; // Reset E key to prevent multiple triggers
+                window.keys.e = false; // Reset E key to prevent multiple triggers
             }
         }
     },
@@ -204,69 +234,70 @@ const player = {
 
     // Player draw method
     draw: function() {
-        // Always draw a colored rectangle first as a fallback base
-        ctx.fillStyle = '#2196F3'; // Blue rectangle as base
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        
         try {
             // Check if sprite is available and loaded correctly
-            const hasValidSprite = this.spriteImg && this.spriteImg.complete && !this.spriteImg.naturalWidth === 0 && this.spriteSheet;
+            const hasValidSprite = this.spriteImg && this.spriteImg.complete && this.spriteImg.naturalWidth !== 0;
             
             if (hasValidSprite) {
-                try {
-                    // Use the sprite sheet for drawing with better error checking
-                    // Each frame is 108x144 pixels in our sprite sheet (or could be 64x64 for our fallback)
-                    const useSimpleSprite = this.spriteSheet.indexOf('data:image') === 0;
-                    
-                    // Set frame dimensions based on sprite type
-                    const frameWidth = useSimpleSprite ? 64 : 108;
-                    const frameHeight = useSimpleSprite ? 64 : 144;
-                    
-                    // Determine direction for sprite selection (0=down, 1=up, 2=right, 3=left)
-                    let directionIndex = 0; // Default facing down
-                    if (this.facing === 'up') directionIndex = 1;
-                    else if (this.facing === 'right') directionIndex = 2;
-                    else if (this.facing === 'left') directionIndex = 3;
-                    
-                    // Determine animation frame based on movement
-                    let frameIndex = 1; // Default to middle (standing) frame
-                    if (this.isMoving) {
-                        // Calculate animation frame based on time
-                        const walkSpeed = 200; // ms per frame
-                        const frameCount = useSimpleSprite ? 1 : 3; // Simple sprite has no animation frames
-                        frameIndex = Math.floor((Date.now() % (walkSpeed * frameCount)) / walkSpeed);
-                    }
-                    
-                    // Limit frameIndex for simple sprites
-                    if (useSimpleSprite) frameIndex = 0;
-                    
-                    // Calculate source rectangle in sprite sheet
-                    const sx = frameIndex * frameWidth;
-                    const sy = directionIndex * frameHeight;
-                    
-                    // Draw the player sprite
-                    ctx.drawImage(
-                        this.spriteImg,
-                        sx, sy, frameWidth, frameHeight,  // Source rectangle
-                        this.x, this.y, this.width, this.height  // Destination rectangle
-                    );
-                } catch (drawErr) {
-                    console.error("Error drawing sprite with drawImage:", drawErr);
-                    // Already drew the blue rectangle as fallback, now add details
-                    this.drawFallbackCharacter();
+                // Define sprite frame dimensions (each character takes 1/3 of the image width and 1/4 of the image height)
+                const frameWidth = this.spriteImg.naturalWidth / 3; // 3 frames per row
+                const frameHeight = this.spriteImg.naturalHeight / 4; // 4 rows (directions)
+                
+                // Determine direction for sprite selection
+                // First row (index 0): walking down (toward screen)
+                // Second row (index 1): walking up (into screen)
+                // Third row (index 2): walking right
+                // Fourth row (index 3): walking left
+                let directionIndex = 0; // Default facing down
+                if (this.facing === 'up') directionIndex = 1;
+                else if (this.facing === 'right') directionIndex = 2;
+                else if (this.facing === 'left') directionIndex = 3;
+                
+                // Determine animation frame based on movement
+                let frameIndex = 1; // Default to middle frame (standing)
+                
+                // For the first row (down), the leftmost sprite is the standing position
+                if (directionIndex === 0 && !this.isMoving) {
+                    frameIndex = 0;
+                }
+                // For other rows, the middle sprite is the standing position
+                else if (!this.isMoving) {
+                    frameIndex = 1;
+                }
+                // If moving, animate between the frames
+                else {
+                    // Calculate animation frame based on time
+                    const walkSpeed = 150; // ms per frame
+                    const frameCount = 3; // 3 frames per animation
+                    frameIndex = Math.floor((Date.now() % (walkSpeed * frameCount)) / walkSpeed);
+                }
+                
+                // Calculate source rectangle in sprite sheet
+                const sx = frameIndex * frameWidth;
+                const sy = directionIndex * frameHeight;
+                
+                // Draw the player sprite
+                ctx.drawImage(
+                    this.spriteImg,
+                    sx, sy, frameWidth, frameHeight,  // Source rectangle
+                    this.x, this.y, this.width, this.height  // Destination rectangle
+                );
+                
+                // Draw player debug info if debug mode is on
+                if (window.location.hash === '#debug') {
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillStyle = 'white';
+                    ctx.font = '10px Arial';
+                    ctx.fillText(`X: ${Math.round(this.x)}, Y: ${Math.round(this.y)}`, this.x, this.y - 5);
+                    ctx.fillText(`Frame: ${frameIndex}, Dir: ${directionIndex}`, this.x, this.y - 15);
+                    ctx.fillText(`Sprite: ${hasValidSprite}`, this.x, this.y - 25);
                 }
             } else {
-                // No valid sprite, draw fallback character
+                // No valid sprite, draw fallback character and show error message
+                console.error("Sprite not valid. Complete: " + this.spriteImg?.complete + 
+                             ", Width: " + this.spriteImg?.naturalWidth);
                 this.drawFallbackCharacter();
-            }
-            
-            // Draw player debug info if debug mode is on
-            if (window.location.hash === '#debug') {
-                ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-                ctx.fillStyle = 'white';
-                ctx.font = '10px Arial';
-                ctx.fillText(`X: ${Math.round(this.x)}, Y: ${Math.round(this.y)}`, this.x, this.y - 5);
             }
         } catch (error) {
             console.error('Error in player.draw:', error);
@@ -312,7 +343,8 @@ const player = {
 };
 
 // NPCs
-const npcs = [
+// Use global window.npcs instead of const declaration
+window.npcs = [
     {
         x: 600,
         y: 200,
@@ -332,6 +364,10 @@ const npcs = [
             description: "Help fix bugs in our software",
             reward: 100,
             complete: false
+        },
+        update: function(deltaTime) {
+            // NPC AI logic can go here in the future
+            // For now, just a placeholder to prevent errors
         }
     },
     {
@@ -347,12 +383,17 @@ const npcs = [
             "Hello! I'm your Career Advisor.",
             "I can help you improve your skill set and find better job opportunities.",
             "Come back to me when you need career advice!"
-        ]
+        ],
+        update: function(deltaTime) {
+            // NPC AI logic can go here in the future
+            // For now, just a placeholder to prevent errors
+        }
     }
 ];
 
 // Items that can be picked up
-const items = [
+// Use global window.items instead of const declaration
+window.items = [
     {
         id: "book",
         name: "Textbook",
@@ -364,7 +405,7 @@ const items = [
         visible: true,
         
         effect: function() {
-            playerStats.education += 3;
+            window.playerStats.education += 3;
             updateStatsDisplay();
             return "You read the textbook and learned new concepts. Education +3";
         },
@@ -393,8 +434,8 @@ const items = [
         visible: true,
         
         effect: function() {
-            playerStats.career += 2;
-            playerStats.education += 2;
+            window.playerStats.career += 2;
+            window.playerStats.education += 2;
             updateStatsDisplay();
             return "You used the laptop to practice coding and apply for jobs. Career +2, Education +2";
         },
@@ -415,7 +456,8 @@ const items = [
 ];
 
 // Obstacles (walls, furniture)
-const obstacles = [
+// Use global window.obstacles instead of const declaration
+window.obstacles = [
     // Outer walls
     { x: 0, y: 0, width: GAME_WIDTH, height: 20, type: "wall" },
     { x: 0, y: 0, width: 20, height: GAME_HEIGHT, type: "wall" },
@@ -436,11 +478,12 @@ const obstacles = [
 ];
 
 // Notification system
-const notifications = [];
+// Use global window.notifications instead of const declaration
+// const notifications = [];
 
 // Display a message notification
 function displayMessage(message, duration = 3000) {
-    notifications.push({
+    window.notifications.push({
         message: message,
         duration: duration,
         timestamp: Date.now()
@@ -452,16 +495,16 @@ function drawNotifications() {
     const currentTime = Date.now();
     
     // Remove expired notifications
-    for (let i = notifications.length - 1; i >= 0; i--) {
-        if (currentTime - notifications[i].timestamp > notifications[i].duration) {
-            notifications.splice(i, 1);
+    for (let i = window.notifications.length - 1; i >= 0; i--) {
+        if (currentTime - window.notifications[i].timestamp > window.notifications[i].duration) {
+            window.notifications.splice(i, 1);
         }
     }
     
     // Draw active notifications
     ctx.textAlign = "right";
-    for (let i = 0; i < notifications.length; i++) {
-        const notification = notifications[i];
+    for (let i = 0; i < window.notifications.length; i++) {
+        const notification = window.notifications[i];
         const age = currentTime - notification.timestamp;
         const opacity = Math.min(1, Math.min(age / 500, (notification.duration - age) / 500));
         
@@ -531,149 +574,213 @@ function getInteractableItem() {
 // Start dialog with an NPC
 function startDialog(npc) {
     console.log("Starting dialog with:", npc.name);
-    interactingWith = npc;
+    window.interactingWith = npc;
     inDialogMode = true;
     
-    // Create dialog container if it doesn't exist
-    if (!document.getElementById('dialogContainer')) {
-        const dialogContainer = document.createElement('div');
-        dialogContainer.id = 'dialogContainer';
-        dialogContainer.style.position = 'absolute';
-        dialogContainer.style.bottom = '20px';
-        dialogContainer.style.left = '50%';
-        dialogContainer.style.transform = 'translateX(-50%)';
-        dialogContainer.style.width = '80%';
-        dialogContainer.style.maxWidth = '600px';
-        dialogContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-        dialogContainer.style.color = 'white';
-        dialogContainer.style.padding = '20px';
-        dialogContainer.style.borderRadius = '10px';
-        dialogContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
-        dialogContainer.style.zIndex = '100';
-        
-        // Content for dialog
-        const dialogContent = document.createElement('div');
-        dialogContent.id = 'dialogContent';
-        
-        // NPC name
-        const npcName = document.createElement('div');
-        npcName.id = 'dialogNpcName';
-        npcName.style.fontWeight = 'bold';
-        npcName.style.fontSize = '20px';
-        npcName.style.marginBottom = '10px';
-        
-        // Dialog text
-        const dialogText = document.createElement('div');
-        dialogText.id = 'dialogText';
-        dialogText.style.marginBottom = '15px';
-        dialogText.style.lineHeight = '1.4';
-        
-        // Continue button
-        const continueButton = document.createElement('button');
-        continueButton.id = 'dialogContinue';
-        continueButton.innerText = 'Continue';
-        continueButton.style.backgroundColor = '#4CAF50';
-        continueButton.style.color = 'white';
-        continueButton.style.border = 'none';
-        continueButton.style.padding = '8px 16px';
-        continueButton.style.borderRadius = '4px';
-        continueButton.style.cursor = 'pointer';
-        continueButton.style.marginRight = '10px';
-        continueButton.addEventListener('click', closeDialog);
-        
-        // Close button
-        const closeButton = document.createElement('button');
-        closeButton.id = 'dialogClose';
-        closeButton.innerText = 'Close';
-        closeButton.style.backgroundColor = '#f44336';
-        closeButton.style.color = 'white';
-        closeButton.style.border = 'none';
-        closeButton.style.padding = '8px 16px';
-        closeButton.style.borderRadius = '4px';
-        closeButton.style.cursor = 'pointer';
-        closeButton.addEventListener('click', closeDialog);
-        
-        // Add all elements to dialog
-        dialogContent.appendChild(npcName);
-        dialogContent.appendChild(dialogText);
-        dialogContent.appendChild(continueButton);
-        dialogContent.appendChild(closeButton);
-        dialogContainer.appendChild(dialogContent);
-        
-        // Add dialog to game container
-        document.getElementById('game-container').appendChild(dialogContainer);
-    }
-    
-    // Set NPC name and dialog text
-    document.getElementById('dialogNpcName').innerText = npc.name;
-    
-    // Handle different dialog formats
-    if (Array.isArray(npc.dialogues)) {
-        // Simple array of dialog lines
-        document.getElementById('dialogText').innerText = npc.dialogues[0];
-        npc.currentDialogIndex = 0;
-    } else if (typeof npc.dialogues === 'object' && npc.dialogues.length > 0) {
-        // Complex dialog with options
-        const currentDialog = npc.dialogues[npc.currentDialogueId || 0];
-        document.getElementById('dialogText').innerText = currentDialog.text;
-        
-        // Remove previous options if any
-        const oldOptions = document.querySelectorAll('.dialog-option');
-        oldOptions.forEach(option => option.remove());
-        
-        // Add dialog options if available
-        if (currentDialog.options && currentDialog.options.length > 0) {
-            const dialogContent = document.getElementById('dialogContent');
-            const optionsContainer = document.createElement('div');
-            optionsContainer.className = 'dialog-options';
-            optionsContainer.style.marginBottom = '15px';
-            
-            currentDialog.options.forEach((option, index) => {
-                const optionButton = document.createElement('button');
-                optionButton.className = 'dialog-option';
-                optionButton.innerText = option.text;
-                optionButton.style.backgroundColor = '#2196F3';
-                optionButton.style.color = 'white';
-                optionButton.style.border = 'none';
-                optionButton.style.padding = '5px 10px';
-                optionButton.style.margin = '5px';
-                optionButton.style.borderRadius = '4px';
-                optionButton.style.cursor = 'pointer';
-                optionButton.style.display = 'block';
-                optionButton.style.width = '100%';
-                optionButton.style.textAlign = 'left';
-                
-                // Check if option has a condition
-                if (option.condition && !option.condition()) {
-                    optionButton.disabled = true;
-                    optionButton.style.backgroundColor = '#ccc';
-                    optionButton.style.cursor = 'not-allowed';
-                    optionButton.title = option.conditionFail || 'Not available';
-                }
-                
-                optionButton.addEventListener('click', () => {
-                    selectDialogOption(npc, index);
-                });
-                
-                optionsContainer.appendChild(optionButton);
-            });
-            
-            dialogContent.insertBefore(optionsContainer, document.getElementById('dialogContinue'));
+    // First ensure a game container exists
+    let gameContainer = document.getElementById('game-container');
+    // If game-container doesn't exist, try to find the canvas parent or use body
+    if (!gameContainer) {
+        const canvas = document.getElementById('gameCanvas');
+        if (canvas && canvas.parentNode) {
+            gameContainer = canvas.parentNode;
+            console.log("Using canvas parent as game container");
+        } else {
+            gameContainer = document.body;
+            console.log("No game container found, using document body");
         }
     }
     
+    // Remove any existing dialog container to avoid duplicates
+    const existingDialog = document.getElementById('dialogContainer');
+    if (existingDialog) {
+        existingDialog.remove();
+        console.log("Removed existing dialog container");
+    }
+    
+    // Create a new dialog container
+    const dialogContainer = document.createElement('div');
+    dialogContainer.id = 'dialogContainer';
+    dialogContainer.style.position = 'absolute';
+    dialogContainer.style.bottom = '20px';
+    dialogContainer.style.left = '50%';
+    dialogContainer.style.transform = 'translateX(-50%)';
+    dialogContainer.style.width = '80%';
+    dialogContainer.style.maxWidth = '600px';
+    dialogContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    dialogContainer.style.color = 'white';
+    dialogContainer.style.padding = '20px';
+    dialogContainer.style.borderRadius = '10px';
+    dialogContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
+    dialogContainer.style.zIndex = '100';
+    
+    // Content for dialog
+    const dialogContent = document.createElement('div');
+    dialogContent.id = 'dialogContent';
+    
+    // NPC name
+    const npcName = document.createElement('div');
+    npcName.id = 'dialogNpcName';
+    npcName.style.fontWeight = 'bold';
+    npcName.style.fontSize = '20px';
+    npcName.style.marginBottom = '10px';
+    
+    // Dialog text
+    const dialogText = document.createElement('div');
+    dialogText.id = 'dialogText';
+    dialogText.style.marginBottom = '15px';
+    dialogText.style.lineHeight = '1.4';
+    
+    // Hint text for spacebar
+    const dialogHint = document.createElement('div');
+    dialogHint.id = 'dialogHint';
+    dialogHint.style.fontSize = '12px';
+    dialogHint.style.marginBottom = '10px';
+    dialogHint.style.color = '#aaa';
+    dialogHint.textContent = 'Press SPACE to continue, ESC to close';
+    
+    // Add all elements to dialog
+    dialogContent.appendChild(npcName);
+    dialogContent.appendChild(dialogText);
+    dialogContent.appendChild(dialogHint);
+    dialogContainer.appendChild(dialogContent);
+    
+    // Add dialog to game container or body
+    gameContainer.appendChild(dialogContainer);
+    console.log("Dialog container created and attached to DOM");
+    
+    // Safely set NPC name with null check
+    try {
+        if (npc && npc.name) {
+            npcName.textContent = npc.name;
+        } else {
+            npcName.textContent = "Unknown";
+        }
+    } catch (err) {
+        console.error('Error setting NPC name:', err);
+    }
+    
+    // Initialize the dialog state
+    if (!npc.currentDialogIndex) {
+        npc.currentDialogIndex = 0;
+    }
+    
+    // Handle different dialog formats
+    try {
+        if (npc && Array.isArray(npc.dialogues) && npc.dialogues.length > 0) {
+            // Simple array of dialog lines
+            dialogText.textContent = npc.dialogues[npc.currentDialogIndex] || "...";
+        } else if (npc && npc.dialogues && typeof npc.dialogues === 'object') {
+            // Complex dialog with options
+            const currentDialog = npc.dialogues[npc.currentDialogueId || 0];
+            if (currentDialog && currentDialog.text) {
+                dialogText.textContent = currentDialog.text;
+            } else {
+                dialogText.textContent = "...";
+            }
+            
+            // Add dialog options if available
+            if (currentDialog && currentDialog.options && currentDialog.options.length > 0) {
+                const optionsContainer = document.createElement('div');
+                optionsContainer.className = 'dialog-options';
+                optionsContainer.style.marginBottom = '15px';
+                
+                currentDialog.options.forEach((option, index) => {
+                    if (!option) return;
+                    
+                    const optionButton = document.createElement('button');
+                    optionButton.className = 'dialog-option';
+                    optionButton.textContent = option.text || "...";
+                    optionButton.style.backgroundColor = '#2196F3';
+                    optionButton.style.color = 'white';
+                    optionButton.style.border = 'none';
+                    optionButton.style.padding = '5px 10px';
+                    optionButton.style.margin = '5px';
+                    optionButton.style.borderRadius = '4px';
+                    optionButton.style.cursor = 'pointer';
+                    optionButton.style.display = 'block';
+                    optionButton.style.width = '100%';
+                    optionButton.style.textAlign = 'left';
+                    
+                    // Check if option has a condition
+                    if (option.condition && !option.condition()) {
+                        optionButton.disabled = true;
+                        optionButton.style.backgroundColor = '#ccc';
+                        optionButton.style.cursor = 'not-allowed';
+                        optionButton.title = option.conditionFail || 'Not available';
+                    }
+                    
+                    optionButton.addEventListener('click', () => {
+                        selectDialogOption(npc, index);
+                    });
+                    
+                    optionsContainer.appendChild(optionButton);
+                });
+                
+                dialogContent.insertBefore(optionsContainer, dialogHint);
+            }
+        } else {
+            // Fallback for missing dialogues
+            dialogText.textContent = "...";
+        }
+    } catch (err) {
+        console.error('Error setting dialog text:', err);
+        // Set a fallback message if there's an error
+        dialogText.textContent = "...";
+    }
+    
     // Show the dialog container
-    document.getElementById('dialogContainer').style.display = 'block';
+    dialogContainer.style.display = 'block';
+    
+    // Add an event listener for spacebar key to advance dialog
+    document.addEventListener('keydown', handleDialogKeyPress);
 }
 
 // Close the dialog
 function closeDialog() {
     inDialogMode = false;
-    interactingWith = null;
+    window.interactingWith = null;
     
-    // Hide the dialog container
-    if (document.getElementById('dialogContainer')) {
-        document.getElementById('dialogContainer').style.display = 'none';
+    // Remove the keydown event listener
+    document.removeEventListener('keydown', handleDialogKeyPress);
+    
+    // Find and remove the dialog container
+    const dialogContainer = document.getElementById('dialogContainer');
+    if (dialogContainer) {
+        dialogContainer.remove();
+        console.log("Dialog container removed");
+    }
+}
+
+// Handle key presses during dialog
+function handleDialogKeyPress(e) {
+    if (inDialogMode && window.interactingWith) {
+        if (e.key === ' ' || e.code === 'Space') {
+            advanceDialog(window.interactingWith);
+            e.preventDefault();
+        } else if (e.key === 'Escape') {
+            closeDialog();
+            e.preventDefault();
+        }
+    }
+}
+
+// Advance dialog to next line
+function advanceDialog(npc) {
+    if (!npc || !Array.isArray(npc.dialogues)) return;
+    
+    npc.currentDialogIndex = (npc.currentDialogIndex || 0) + 1;
+    
+    // If we've reached the end of the dialog, close it
+    if (npc.currentDialogIndex >= npc.dialogues.length) {
+        closeDialog();
+        return;
+    }
+    
+    // Otherwise, update the dialog text
+    const dialogText = document.getElementById('dialogText');
+    if (dialogText) {
+        dialogText.textContent = npc.dialogues[npc.currentDialogIndex] || "...";
     }
 }
 
@@ -786,36 +893,8 @@ function gameLoop(timestamp) {
     const deltaTime = (timestamp - lastTime) / 1000; // Convert to seconds
     lastTime = timestamp;
     
-    // Clear the canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw some debug info if debugging is enabled
-    if (window.location.hash === '#debug') {
-        ctx.fillStyle = 'white';
-        ctx.font = '10px Arial';
-        ctx.fillText(`FPS: ${Math.round(1 / (deltaTime || 0.016))}`, 10, 20);
-        ctx.fillText(`Player: ${Math.round(player.x)},${Math.round(player.y)}`, 10, 35);
-        ctx.fillText(`Game State: ${gameState}`, 10, 50);
-    }
-    
     // Update game state based on current state
     if (gameState === "gameplay") {
-        // Always draw game objects in dialog mode too
-        // Draw obstacles
-        drawObstacles();
-        
-        // Draw items
-        drawItems();
-        
-        // Draw player
-        player.draw();
-        
-        // Draw NPCs
-        drawNPCs();
-        
-        // Draw job building
-        drawJobBuilding();
-        
         // Update game state
         if (!inDialogMode) {
             // Only update positions when not in dialog
@@ -827,11 +906,13 @@ function gameLoop(timestamp) {
                     npc.update(deltaTime);
                 }
             }
-            
-            // Check for nearby interactable NPCs
-            checkNearbyNPCs();
-        } else {
-            // Handle dialog
+        }
+        
+        // Draw the game scene using our unified draw function
+        draw();
+        
+        // Draw dialog if in dialog mode
+        if (inDialogMode) {
             drawDialog();
         }
     } else if (gameState === "working") {
@@ -844,11 +925,23 @@ function gameLoop(timestamp) {
         updateLogicGateMinigame(deltaTime);
     }
     
+    // Draw some debug info if debugging is enabled
+    if (window.location.hash === '#debug') {
+        ctx.fillStyle = 'white';
+        ctx.font = '10px Arial';
+        ctx.fillText(`FPS: ${Math.round(1 / (deltaTime || 0.016))}`, 10, 20);
+        ctx.fillText(`Player: ${Math.round(player.x)},${Math.round(player.y)}`, 10, 35);
+        ctx.fillText(`Game State: ${gameState}`, 10, 50);
+        
+        // Show nearby building info if any
+        const nearbyBuilding = checkBuildingEntrances();
+        if (nearbyBuilding) {
+            ctx.fillText(`Near: ${nearbyBuilding.name}`, 10, 65);
+        }
+    }
+    
     // Draw notifications if there are any
     drawNotifications();
-    
-    // Draw UI
-    drawUI();
     
     // Request the next frame
     animationFrameId = requestAnimationFrame(gameLoop);
@@ -861,6 +954,31 @@ function loadImages() {
         let loadedCount = 0;
         const requiredCount = 2; // At minimum we need the player sprite and job building
         let loadingTimeout;
+
+        // Check if we already have preloaded images in window.imageObjects
+        if (window.imageObjects && window.imageObjects.playerSprite && window.imageObjects.playerSprite.complete) {
+            console.log('Using preloaded sprite from window.imageObjects');
+            // Set player sprite reference to the preloaded one
+            player.spriteImg = window.imageObjects.playerSprite;
+            player.spriteSheet = window.IMAGES.playerSprite;
+            loadedCount++;
+            
+            // Set job building image if available
+            if (window.imageObjects.jobBuilding && window.imageObjects.jobBuilding.complete) {
+                console.log('Using preloaded job building image from window.imageObjects');
+                jobBuilding.img = window.imageObjects.jobBuilding;
+                loadedCount++;
+            } else {
+                console.log('No preloaded job building image, will use fallback');
+                jobBuilding.img = null;
+                loadedCount++;
+            }
+            
+            // Resolve immediately since we have our images
+            console.log('All required images loaded from preloaded sources.');
+            resolve();
+            return;
+        }
 
         // Set a global timeout as safety mechanism
         loadingTimeout = setTimeout(() => {
@@ -968,35 +1086,114 @@ function loadImages() {
 
         // Load building image or use fallback
         console.log('Handling job building image');
-        if (typeof IMAGES !== 'undefined' && IMAGES.jobBuilding) {
-            console.log('Loading job building image');
-            jobBuilding.img = new Image();
-            jobBuilding.img.onload = function() {
-                console.log('Job building image loaded');
-                loadedCount++;
-                checkIfComplete();
-            };
-            jobBuilding.img.onerror = function() {
-                console.warn('Failed to load job building image, using fallback');
-                jobBuilding.img = null;
-                loadedCount++; // Count it anyway, we'll draw a rectangle instead
-                checkIfComplete();
-            };
-            jobBuilding.img.src = IMAGES.jobBuilding;
-            
-            // Add a timeout for building image
-            setTimeout(() => {
-                if (jobBuilding.img && !jobBuilding.img.complete) {
-                    console.warn('Job building image load timeout, using fallback');
-                    jobBuilding.img = null;
+        if (typeof IMAGES !== 'undefined') {
+            // Try both 'building' and 'jobBuilding' properties
+            const buildingPath = IMAGES.building || IMAGES.jobBuilding;
+            if (buildingPath) {
+                console.log('Loading job building image from path:', buildingPath);
+                jobBuilding.img = new Image();
+                jobBuilding.img.onload = function() {
+                    console.log('Job building image loaded successfully from:', buildingPath);
                     loadedCount++;
                     checkIfComplete();
+                };
+                jobBuilding.img.onerror = function() {
+                    console.warn('Failed to load job building image from primary path:', buildingPath);
+                    
+                    // Try alternate paths
+                    const alternativePaths = [
+                        '/images/building.png',
+                        'images/building.png',
+                        '../images/building.png',
+                        'docs/images/building.png',
+                        '/docs/images/building.png',
+                        window.location.origin + '/images/building.png'
+                    ];
+                    
+                    let attempted = 0;
+                    function tryNextPath() {
+                        if (attempted >= alternativePaths.length) {
+                            console.warn('All building image paths failed, using fallback');
+                            
+                            // Create a fallback building image using canvas
+                            if (typeof createSimpleBuildingImage === 'function') {
+                                const fallbackSrc = createSimpleBuildingImage();
+                                jobBuilding.img = new Image();
+                                jobBuilding.img.src = fallbackSrc;
+                                console.log('Created fallback building image using canvas');
+                            } else {
+                                jobBuilding.img = null;
+                            }
+                            
+                            loadedCount++;
+                            checkIfComplete();
+                            return;
+                        }
+                        
+                        const path = alternativePaths[attempted++];
+                        console.log('Trying alternate building path:', path);
+                        
+                        const tempImg = new Image();
+                        tempImg.onload = function() {
+                            console.log('Building image loaded from alternate path:', path);
+                            jobBuilding.img = tempImg;
+                            loadedCount++;
+                            checkIfComplete();
+                        };
+                        tempImg.onerror = function() {
+                            console.warn('Failed to load from alternate path:', path);
+                            tryNextPath();
+                        };
+                        tempImg.src = path;
+                    }
+                    
+                    tryNextPath();
+                };
+                jobBuilding.img.src = buildingPath;
+                
+                // Add a timeout for building image
+                setTimeout(() => {
+                    if (jobBuilding.img && !jobBuilding.img.complete) {
+                        console.warn('Job building image load timeout, using fallback');
+                        // Try to create a fallback image
+                        if (typeof createSimpleBuildingImage === 'function') {
+                            const fallbackSrc = createSimpleBuildingImage();
+                            jobBuilding.img = new Image();
+                            jobBuilding.img.src = fallbackSrc;
+                            console.log('Created fallback building image after timeout');
+                        } else {
+                            jobBuilding.img = null;
+                        }
+                        loadedCount++;
+                        checkIfComplete();
+                    }
+                }, 3000);
+            } else {
+                console.log('No job building image path found in IMAGES object, will use fallback');
+                // Try to create a fallback image
+                if (typeof createSimpleBuildingImage === 'function') {
+                    const fallbackSrc = createSimpleBuildingImage();
+                    jobBuilding.img = new Image();
+                    jobBuilding.img.src = fallbackSrc;
+                    console.log('Created fallback building image');
+                } else {
+                    jobBuilding.img = null;
                 }
-            }, 3000);
+                loadedCount++;
+                checkIfComplete();
+            }
         } else {
-            console.log('No job building image in IMAGES object, will use fallback');
-            jobBuilding.img = null;
-            loadedCount++; // Count it anyway, we'll draw a rectangle
+            console.log('IMAGES object not defined, using fallback for building');
+            // Try to create a fallback image
+            if (typeof createSimpleBuildingImage === 'function') {
+                const fallbackSrc = createSimpleBuildingImage();
+                jobBuilding.img = new Image();
+                jobBuilding.img.src = fallbackSrc;
+                console.log('Created fallback building image');
+            } else {
+                jobBuilding.img = null;
+            }
+            loadedCount++;
             checkIfComplete();
         }
 
@@ -1396,7 +1593,7 @@ function initGame() {
 // Handle key down events
 function handleKeyDown(e) {
     // Store key state directly in keys object
-    keys[e.key] = true;
+    window.keys[e.key] = true;
     
     // Handle special cases
     switch(e.key) {
@@ -1425,7 +1622,7 @@ function handleKeyDown(e) {
 // Handle key up events
 function handleKeyUp(e) {
     // Reset key state
-    keys[e.key] = false;
+    window.keys[e.key] = false;
 }
 
 // Handle action button (E key)
@@ -1443,6 +1640,13 @@ function handleAction() {
     const item = getInteractableItem();
     if (item) {
         pickUpItem(item);
+        return;
+    }
+    
+    // Check for building entrance interaction
+    const building = checkBuildingEntrances();
+    if (building) {
+        enterBuilding(building);
         return;
     }
     
@@ -1512,10 +1716,10 @@ function initTouchControls() {
         upBtn.style.gridColumn = '2';
         upBtn.style.gridRow = '1';
         upBtn.className = 'touch-button';
-        upBtn.addEventListener('touchstart', () => { touchControls.up = true; });
-        upBtn.addEventListener('touchend', () => { touchControls.up = false; });
-        upBtn.addEventListener('mousedown', () => { touchControls.up = true; });
-        upBtn.addEventListener('mouseup', () => { touchControls.up = false; });
+        upBtn.addEventListener('touchstart', () => { window.touchControls.up = true; });
+        upBtn.addEventListener('touchend', () => { window.touchControls.up = false; });
+        upBtn.addEventListener('mousedown', () => { window.touchControls.up = true; });
+        upBtn.addEventListener('mouseup', () => { window.touchControls.up = false; });
         dPad.appendChild(upBtn);
         
         // Left button
@@ -1525,10 +1729,10 @@ function initTouchControls() {
         leftBtn.style.gridColumn = '1';
         leftBtn.style.gridRow = '2';
         leftBtn.className = 'touch-button';
-        leftBtn.addEventListener('touchstart', () => { touchControls.left = true; });
-        leftBtn.addEventListener('touchend', () => { touchControls.left = false; });
-        leftBtn.addEventListener('mousedown', () => { touchControls.left = true; });
-        leftBtn.addEventListener('mouseup', () => { touchControls.left = false; });
+        leftBtn.addEventListener('touchstart', () => { window.touchControls.left = true; });
+        leftBtn.addEventListener('touchend', () => { window.touchControls.left = false; });
+        leftBtn.addEventListener('mousedown', () => { window.touchControls.left = true; });
+        leftBtn.addEventListener('mouseup', () => { window.touchControls.left = false; });
         dPad.appendChild(leftBtn);
         
         // Right button
@@ -1538,10 +1742,10 @@ function initTouchControls() {
         rightBtn.style.gridColumn = '3';
         rightBtn.style.gridRow = '2';
         rightBtn.className = 'touch-button';
-        rightBtn.addEventListener('touchstart', () => { touchControls.right = true; });
-        rightBtn.addEventListener('touchend', () => { touchControls.right = false; });
-        rightBtn.addEventListener('mousedown', () => { touchControls.right = true; });
-        rightBtn.addEventListener('mouseup', () => { touchControls.right = false; });
+        rightBtn.addEventListener('touchstart', () => { window.touchControls.right = true; });
+        rightBtn.addEventListener('touchend', () => { window.touchControls.right = false; });
+        rightBtn.addEventListener('mousedown', () => { window.touchControls.right = true; });
+        rightBtn.addEventListener('mouseup', () => { window.touchControls.right = false; });
         dPad.appendChild(rightBtn);
         
         // Down button
@@ -1551,10 +1755,10 @@ function initTouchControls() {
         downBtn.style.gridColumn = '2';
         downBtn.style.gridRow = '3';
         downBtn.className = 'touch-button';
-        downBtn.addEventListener('touchstart', () => { touchControls.down = true; });
-        downBtn.addEventListener('touchend', () => { touchControls.down = false; });
-        downBtn.addEventListener('mousedown', () => { touchControls.down = true; });
-        downBtn.addEventListener('mouseup', () => { touchControls.down = false; });
+        downBtn.addEventListener('touchstart', () => { window.touchControls.down = true; });
+        downBtn.addEventListener('touchend', () => { window.touchControls.down = false; });
+        downBtn.addEventListener('mousedown', () => { window.touchControls.down = true; });
+        downBtn.addEventListener('mouseup', () => { window.touchControls.down = false; });
         dPad.appendChild(downBtn);
         
         touchControlsDiv.appendChild(dPad);
@@ -1998,48 +2202,126 @@ window.addEventListener("load", initGame);
 
 // Check for nearby interactable NPCs
 function checkNearbyNPCs() {
-    if (interactingWith === null) {
-        for (const npc of npcs) {
-            // Check if player is near an NPC
-            const dist = Math.sqrt(
-                Math.pow(player.x + player.width/2 - (npc.x + npc.width/2), 2) +
-                Math.pow(player.y + player.height/2 - (npc.y + npc.height/2), 2)
-            );
-            
-            // If close enough, show interaction prompt
-            if (dist < 100) {
-                ctx.fillStyle = "white";
-                ctx.font = "14px Arial";
-                ctx.textAlign = "center";
-                ctx.fillText("Press E to talk", npc.x + npc.width/2, npc.y - 25);
-                
-                // If E key is pressed, start dialog
-                if (keys.e) {
-                    startDialog(npc);
-                    keys.e = false; // Reset to prevent multiple triggers
-                }
-            }
+    // Get the closest NPC
+    let closestNPC = null;
+    let closestDistance = Infinity;
+    
+    for (const npc of npcs) {
+        const dx = npc.x - player.x;
+        const dy = npc.y - player.y;
+        const distance = Math.sqrt(dx*dx + dy*dy);
+        
+        if (distance < INTERACTION_DISTANCE && distance < closestDistance) {
+            closestNPC = npc;
+            closestDistance = distance;
         }
+    }
+    
+    // If an NPC is nearby, show interaction indicator
+    if (closestNPC) {
+        drawInteractionIndicator(closestNPC, "Press E to Talk");
+        
+        // Check for E key to start dialog
+        if (window.keys.e) {
+            startDialog(closestNPC);
+            window.keys.e = false; // Reset to prevent multiple triggers
+        }
+    }
+    
+    return closestNPC;
+}
+
+// Function for player to start working 
+function startWork() {
+    // Change gameState to working
+    window.gameState = "working";
+    
+    // Initialize the work minigame
+    workMinigame = new WorkMinigame();
+}
+
+// Function to end work
+function endWork(completed) {
+    // Return to normal gameplay
+    window.gameState = "gameplay";
+    
+    // Apply rewards if completed
+    if (completed) {
+        playerStats.money += 100;
+        playerStats.career += 1;
+        
+        // Update display
+        updateStatsDisplay();
+        
+        // Show message
+        displayMessage("You earned $100 and gained 1 career point!");
     }
 }
 
-// Start work minigame
-function startWork() {
-    console.log("Starting work minigame");
-    gameState = "working";
+// Function to open Logic Gates minigame
+function openLogicGatesMinigame() {
+    window.gameState = "minigame";
+    logicGateMinigame = new LogicGateMinigame('gameCanvas');
+}
+
+// Function to exit Logic Gates minigame
+function exitLogicGatesMinigame(success) {
+    window.gameState = "gameplay";
     
-    // Initialize work minigame variables
-    workMinigame = {
-        tasks: [
-            { name: "Debug code", completed: false, progress: 0, maxProgress: 100 },
-            { name: "Write documentation", completed: false, progress: 0, maxProgress: 80 },
-            { name: "Test application", completed: false, progress: 0, maxProgress: 120 }
-        ],
-        currentTask: 0,
-        taskSpeed: 0.5,
-        reward: 200,
-        timeLeft: 60 // seconds
-    };
+    if (success) {
+        playerStats.education += 5;
+        displayMessage("Great job! You gained 5 education points.");
+    } else {
+        displayMessage("You can try the logic gates challenge again later.");
+    }
+    
+    updateStatsDisplay();
+}
+
+// Initialize the game when the window loads
+// function initGame() {
+//     // Only set default position if player hasn't been positioned yet
+//     if (window.gameState === "gameplay" && !player.hasBeenPositioned) {
+//         // Set initial player position
+//         player.x = Math.floor(GAME_WIDTH / 2 - player.width / 2);
+//         player.y = Math.floor(GAME_HEIGHT / 2 - player.height / 2);
+//         player.hasBeenPositioned = true;
+//     }
+//
+//     // ... rest of code ...
+// }
+// Note: Second initGame function removed to prevent infinite recursion with the one defined at line 1223
+
+// Function to handle key presses
+function handleKeyPress(e) {
+    // Gameplay controls
+    if (window.gameState === "gameplay" && !inDialogMode) {
+        if (e.key === 'e' || e.key === 'E') {
+            handleInteraction();
+        }
+    }
+    
+    // Exit work minigame with escape
+    if (window.gameState === "working") {
+        if (e.key === 'Escape') {
+            endWork(false);
+        }
+    } else if (window.gameState === "minigame") {
+        window.gameState = "gameplay";
+    }
+}
+
+// Toggle inventory display
+function toggleInventory() {
+    const inventoryContainer = document.getElementById('inventoryContainer');
+    
+    if (inventoryContainer.style.display === 'none') {
+        inventoryContainer.style.display = 'flex';
+        window.gameState = "inventory";
+    } else {
+        inventoryContainer.style.display = 'none';
+        window.gameState = "playing";
+    }
 }
 
 // Draw work minigame
@@ -2113,69 +2395,29 @@ function drawWorkMinigame() {
 
 // Update work minigame
 function updateWorkMinigame(deltaTime) {
-    // Update time left
-    workMinigame.timeLeft -= deltaTime;
-    
-    if (workMinigame.timeLeft <= 0) {
-        // End minigame on timeout
-        endWork(false);
-        return;
-    }
-    
-    // Check if current task is completed
-    const currentTask = workMinigame.tasks[workMinigame.currentTask];
-    if (currentTask.progress >= currentTask.maxProgress) {
-        currentTask.completed = true;
+    // Update work progress
+    if (gameState === "working" && workMinigame) {
+        // Space to advance progress
+        if (window.keys[" "]) {
+            workMinigame.progress += 10;
+            window.keys[" "] = false; // Reset space key
+        }
         
-        // Move to next task
-        workMinigame.currentTask++;
+        // Escape to exit
+        if (window.keys.Escape) {
+            endWork(false);
+            window.keys.Escape = false; // Reset escape key
+        }
         
-        // Check if all tasks are completed
-        if (workMinigame.currentTask >= workMinigame.tasks.length) {
+        // When work is completed
+        if (workMinigame.progress >= 100) {
+            // Award money
+            playerStats.money += 100;
+            
+            // End work
             endWork(true);
-            return;
         }
     }
-    
-    // Check for space key press to work on task
-    if (keys[" "]) {
-        workMinigame.tasks[workMinigame.currentTask].progress += workMinigame.taskSpeed * 10;
-        keys[" "] = false; // Reset space key
-    }
-    
-    // Check for escape key to exit
-    if (keys.Escape) {
-        endWork(false);
-        keys.Escape = false; // Reset escape key
-    }
-}
-
-// End work minigame
-function endWork(success) {
-    // Return to gameplay
-    gameState = "gameplay";
-    
-    if (success) {
-        // Award money and career points
-        playerStats.money += workMinigame.reward;
-        playerStats.career += 5;
-        displayMessage(`Work completed! Earned $${workMinigame.reward} and 5 career points.`);
-    } else {
-        // Give partial reward based on completed tasks
-        const completedTasks = workMinigame.tasks.filter(task => task.completed).length;
-        const partialReward = Math.floor(workMinigame.reward * (completedTasks / workMinigame.tasks.length));
-        
-        if (partialReward > 0) {
-            playerStats.money += partialReward;
-            playerStats.career += Math.floor(5 * (completedTasks / workMinigame.tasks.length));
-            displayMessage(`Work partially completed. Earned $${partialReward}.`);
-        } else {
-            displayMessage("Work not completed. No reward earned.");
-        }
-    }
-    
-    // Update stats display
-    updateStatsDisplay();
 }
 
 // Initialize and start Logic Gates Minigame
@@ -2288,37 +2530,203 @@ function drawLogicGateMinigame() {
 
 // Update Logic Gates Minigame
 function updateLogicGateMinigame(deltaTime) {
-    // Update time
-    logicGateMinigame.time -= deltaTime;
-    
-    if (logicGateMinigame.time <= 0) {
-        // Time's up, end the minigame
-        gameState = "gameplay";
-        return;
-    }
-    
-    // Check for win condition
-    if (logicGateMinigame.outputValue === logicGateMinigame.targetValue) {
-        // Level complete
-        logicGateMinigame.level++;
-        logicGateMinigame.score += 100;
+    // Update logic gate minigame
+    if (gameState === "minigame" && logicGateMinigame) {
+        // Update timer
+        logicGateMinigame.timeRemaining -= deltaTime;
         
-        // Start next level or end game if all levels complete
-        if (logicGateMinigame.level > 5) {
-            // Game complete
-            gameState = "gameplay";
-            playerStats.education += 10;
-            updateStatsDisplay();
-            displayMessage("Logic Gates Challenge complete! Education +10");
-        } else {
-            // Next level
-            generateLogicGatePuzzle(logicGateMinigame.level);
+        // Check for timeout
+        if (logicGateMinigame.timeRemaining <= 0) {
+            exitLogicGatesMinigame(false);
+        }
+        
+        // Check for escape key to exit
+        if (window.keys.Escape) {
+            exitLogicGatesMinigame(false);
+            window.keys.Escape = false;
         }
     }
-    
-    // Check for escape key to exit
-    if (keys.Escape) {
-        gameState = "gameplay";
-        keys.Escape = false;
+}
+
+// Game update loop
+function update(deltaTime) {
+    if (window.gameState === "gameplay") {
+        // Update player position
+        player.update(deltaTime);
+        
+        // Update NPCs
+        for (let i = 0; i < npcs.length; i++) {
+            npcs[i].update(deltaTime);
+        }
+        
+        // Update furniture
+        if (typeof updateFurniture === 'function') {
+            updateFurniture(deltaTime);
+        }
+    } else if (window.gameState === "working") {
+        // Update work minigame
+        if (workMinigame) {
+            workMinigame.update(deltaTime);
+        }
+    } else if (window.gameState === "minigame") {
+        // Update logic gates minigame
+        if (logicGateMinigame) {
+            logicGateMinigame.update(deltaTime);
+        }
     }
-} 
+}
+
+// Building entrance system
+const buildings = [
+    {
+        id: 'tech',
+        name: 'Tech Company',
+        x: 600,
+        y: 300,
+        width: 150,
+        height: 100,
+        redirectUrl: 'building-interior.html?building=tech',
+        entranceX: 600,
+        entranceY: 350,
+        entranceRange: 50
+    },
+    {
+        id: 'university',
+        name: 'University',
+        x: 200,
+        y: 150,
+        width: 200,
+        height: 120,
+        redirectUrl: 'building-interior.html?building=university',
+        entranceX: 250,
+        entranceY: 210,
+        entranceRange: 50
+    }
+];
+
+// Check if player is near a building entrance
+function checkBuildingEntrances() {
+    for (const building of buildings) {
+        const dx = player.x - building.entranceX;
+        const dy = player.y - building.entranceY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < building.entranceRange) {
+            return building;
+        }
+    }
+    return null;
+}
+
+// Show entrance indicator
+function drawEntranceIndicator(building) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(canvas.width/2 - 150, 50, 300, 40);
+    ctx.fillStyle = 'white';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Enter ${building.name} (E)`, canvas.width/2, 75);
+}
+
+// Enter a building
+function enterBuilding(building) {
+    // Create a transition effect
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'black';
+    overlay.style.zIndex = '1000';
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 1s';
+    document.body.appendChild(overlay);
+    
+    // Fade to black
+    setTimeout(() => {
+        overlay.style.opacity = '1';
+        setTimeout(() => {
+            // Redirect to building interior
+            window.location.href = building.redirectUrl;
+        }, 1000);
+    }, 50);
+}
+
+// Update draw function to show entrance indicators
+function draw() {
+    // Clear the canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    try {
+        // Draw obstacles
+        drawObstacles();
+        
+        // Draw items
+        drawItems();
+        
+        // Draw buildings
+        drawJobBuilding();
+        
+        // Draw player
+        player.draw();
+        
+        // Draw NPCs
+        drawNPCs();
+        
+        // Draw UI
+        drawUI();
+        
+        // Check for nearby interactable NPCs
+        if (!inDialogMode) {
+            checkNearbyNPCs();
+            
+            // Check for nearby building entrances
+            const nearbyBuilding = checkBuildingEntrances();
+            if (nearbyBuilding) {
+                drawEntranceIndicator(nearbyBuilding);
+            }
+        }
+    } catch (e) {
+        console.error("Error in draw function:", e);
+    }
+}
+
+// Create dynamic building image if needed
+function createBuildingImage() {
+    if (!window.IMAGES.jobBuilding || window.IMAGES.jobBuilding.complete === false) {
+        console.log("Creating dynamic building image");
+        const canvas = document.createElement('canvas');
+        canvas.width = 150;
+        canvas.height = 100;
+        const ctx = canvas.getContext('2d');
+        
+        // Draw a simple building
+        ctx.fillStyle = '#555555';
+        ctx.fillRect(0, 0, 150, 100);
+        
+        // Add windows
+        ctx.fillStyle = '#88CCFF';
+        for (let y = 10; y < 80; y += 30) {
+            for (let x = 10; x < 130; x += 30) {
+                ctx.fillRect(x, y, 20, 20);
+            }
+        }
+        
+        // Add door
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(60, 70, 30, 30);
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(65, 85, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Convert to image
+        const img = new Image();
+        img.src = canvas.toDataURL();
+        window.IMAGES.jobBuilding = img;
+        
+        return img;
+    }
+    return window.IMAGES.jobBuilding;
+}

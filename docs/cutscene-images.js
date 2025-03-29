@@ -1,3 +1,82 @@
+// Cutscene Images and Functions
+// This file provides basic cutscene functionality
+
+// Cutscene image sources
+window.CUTSCENE_IMAGES = {
+    intro1: 'assets/cutscenes/intro1.png',
+    intro2: 'assets/cutscenes/intro2.png',
+    work1: 'assets/cutscenes/work1.png',
+    ending: 'assets/cutscenes/ending.png'
+};
+
+// Cutscene text data
+window.CUTSCENE_DATA = {
+    intro: [
+        { image: 'intro1', text: "Welcome to FULIFE, a game about balancing education, career, and happiness." },
+        { image: 'intro2', text: "Your goal is to navigate through life challenges and build a successful future." }
+    ],
+    work: [
+        { image: 'work1', text: "You've started working at the tech company. Your skills will improve over time." }
+    ],
+    ending: [
+        { image: 'ending', text: "Congratulations! You've achieved your career goals and found happiness." }
+    ]
+};
+
+// Displays a cutscene
+function showCutscene(cutsceneId) {
+    if (!CUTSCENE_DATA[cutsceneId]) {
+        console.error("Cutscene not found:", cutsceneId);
+        return;
+    }
+    
+    console.log("Starting cutscene:", cutsceneId);
+    // In a real implementation, this would display the cutscene
+    return new Promise(resolve => {
+        // Simulate cutscene display
+        setTimeout(() => {
+            console.log("Cutscene complete");
+            resolve();
+        }, 1000);
+    });
+}
+
+// Loads cutscene images
+function preloadCutsceneImages() {
+    return new Promise(resolve => {
+        const totalImages = Object.keys(CUTSCENE_IMAGES).length;
+        let loadedCount = 0;
+        
+        if (totalImages === 0) {
+            console.log("No cutscene images to preload");
+            resolve();
+            return;
+        }
+        
+        console.log("Preloading cutscene images...");
+        
+        for (const key in CUTSCENE_IMAGES) {
+            const img = new Image();
+            img.onload = () => {
+                loadedCount++;
+                if (loadedCount >= totalImages) {
+                    console.log("All cutscene images loaded");
+                    resolve();
+                }
+            };
+            img.onerror = () => {
+                console.warn(`Failed to load cutscene image: ${key}`);
+                loadedCount++;
+                if (loadedCount >= totalImages) {
+                    console.log("Cutscene image loading complete with errors");
+                    resolve();
+                }
+            };
+            img.src = CUTSCENE_IMAGES[key];
+        }
+    });
+}
+
 // Simple placeholder images for cutscenes
 // Replace these with actual images later
 

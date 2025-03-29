@@ -11,45 +11,175 @@ window.INTERACTION_DISTANCE = window.INTERACTION_DISTANCE || 60;
 let initErrors = [];
 let loadingStatus = {};
 
-// Game state
-let gameState = "loading"; // loading, gameplay, working, minigame, paused, error
-let interactingWith = null;
-let canvas, ctx;
-let lastTime = 0;
-let gameInitialized = false;
-let inDialogMode = false;
-let animationFrameId = null;
-let furnitureImages = {};
-let workMinigame = null;
+// Game state - check if gameState already exists in global scope
+if (typeof window.gameState === 'undefined') {
+    window.gameState = "loading"; // loading, gameplay, working, minigame, paused, error
+}
+// Use a separate variable for local state tracking if needed
+let currentGameState = window.gameState;
 
-// Logic Gates Minigame variables
-let logicGateMinigame = null;
+// Use the global variables defined in init.js
+// let interactingWith = null;
+// let canvas, ctx;
+// let lastTime = 0;
+// let gameInitialized = false;
+// let inDialogMode = false;
+// let animationFrameId = null;
+// let furnitureImages = {};
+// let logicGateMinigame = null;
 
 // Input state
-const touchControls = {
-    up: false, 
-    down: false, 
-    left: false, 
-    right: false,
-    action: false, 
-    inventory: false
+// Define touchControls on window to avoid conflicts
+if (typeof window.touchControls === 'undefined') {
+    window.touchControls = {
+        up: false, 
+        down: false, 
+        left: false, 
+        right: false,
+        action: false, 
+        inventory: false
+    };
+}
+
+// Use the global keys object instead of declaring a new one
+// const keys = {
+//     w: false,
+//     a: false,
+//     s: false,
+//     d: false,
+//     ArrowUp: false, 
+//     ArrowDown: false, 
+//     ArrowLeft: false, 
+//     ArrowRight: false,
+//     e: false,
+//     i: false
+// };
+
+// Image objects - use the global imageObjects instead
+// const imageObjects = {};
+
+// Add a global draw function that the game loop can call
+window.draw = function() {
+    // Check if there's a global draw function defined elsewhere
+    if (typeof draw === 'function' && draw !== window.draw) {
+        draw();
+        return;
+    }
+    
+    // Basic rendering if no other draw function exists
+    if (window.ctx && window.canvas) {
+        // Clear the canvas
+        window.ctx.fillStyle = 'black';
+        window.ctx.fillRect(0, 0, window.GAME_WIDTH, window.GAME_HEIGHT);
+        
+        // Draw the player if it exists
+        if (window.player) {
+            if (window.player.draw && typeof window.player.draw === 'function') {
+                window.player.draw();
+            } else {
+                // Fallback player drawing
+                window.ctx.fillStyle = window.player.color || 'white';
+                window.ctx.fillRect(window.player.x, window.player.y, window.player.width, window.player.height);
+            }
+        }
+        
+        // Draw NPCs if they exist
+        if (window.npcs && window.npcs.length > 0) {
+            for (const npc of window.npcs) {
+                if (npc.draw && typeof npc.draw === 'function') {
+                    npc.draw();
+                } else {
+                    // Fallback NPC drawing
+                    window.ctx.fillStyle = npc.color || 'blue';
+                    window.ctx.fillRect(npc.x, npc.y, npc.width, npc.height);
+                    
+                    // Draw name above NPC
+                    if (npc.name) {
+                        window.ctx.fillStyle = 'white';
+                        window.ctx.font = '12px Arial';
+                        window.ctx.textAlign = 'center';
+                        window.ctx.fillText(npc.name, npc.x + npc.width/2, npc.y - 5);
+                    }
+                }
+            }
+        }
+        
+        // Draw status info
+        window.ctx.fillStyle = 'white';
+        window.ctx.font = '16px Arial';
+        window.ctx.textAlign = 'left';
+        window.ctx.fillText('Game state: ' + window.gameState, 10, 20);
+        
+        if (window.playerStats) {
+            let y = 50;
+            window.ctx.fillText('Stats:', 10, y);
+            y += 20;
+            
+            for (const stat in window.playerStats) {
+                window.ctx.fillText(`${stat}: ${window.playerStats[stat]}`, 10, y);
+                y += 20;
+            }
+        }
+    }
 };
 
-const keys = {
-    w: false,
-    a: false,
-    s: false,
-    d: false,
-    ArrowUp: false, 
-    ArrowDown: false, 
-    ArrowLeft: false, 
-    ArrowRight: false,
-    e: false,
-    i: false
+// Add a global update function that the game loop can call
+window.update = function(deltaTime) {
+    // Check if there's already a global update function defined elsewhere
+    if (typeof update === 'function' && update !== window.update) {
+        update(deltaTime);
+        return;
+    }
+    
+    // Basic update logic if no other update function exists
+    if (window.gameState === "gameplay") {
+        // Update player position based on keyboard input
+        if (window.player) {
+            // Calculate movement based on arrow keys
+            let dx = 0, dy = 0;
+            
+            if (window.keys.ArrowUp || window.keys.w) dy -= window.PLAYER_SPEED;
+            if (window.keys.ArrowDown || window.keys.s) dy += window.PLAYER_SPEED;
+            if (window.keys.ArrowLeft || window.keys.a) dx -= window.PLAYER_SPEED;
+            if (window.keys.ArrowRight || window.keys.d) dx += window.PLAYER_SPEED;
+            
+            // Normalize diagonal movement
+            if (dx !== 0 && dy !== 0) {
+                const factor = 1 / Math.sqrt(2);
+                dx *= factor;
+                dy *= factor;
+            }
+            
+            // Update player position
+            player.x += dx;
+            player.y += dy;
+            
+            // Set player facing direction
+            if (dx > 0) player.facing = "right";
+            else if (dx < 0) player.facing = "left";
+            if (dy > 0) player.facing = "down";
+            else if (dy < 0) player.facing = "up";
+            
+            // Keep player within bounds
+            player.x = Math.max(0, Math.min(window.GAME_WIDTH - player.width, player.x));
+            player.y = Math.max(0, Math.min(window.GAME_HEIGHT - player.height, player.y));
+            
+            // Update player if it has an update method
+            if (player.update && typeof player.update === 'function') {
+                player.update(deltaTime);
+            }
+        }
+        
+        // Update NPCs if they exist
+        if (window.npcs && window.npcs.length > 0) {
+            for (const npc of window.npcs) {
+                if (npc.update && typeof npc.update === 'function') {
+                    npc.update(deltaTime);
+                }
+            }
+        }
+    }
 };
-
-// Image objects
-const imageObjects = {};
 
 // Initial setup function
 function initializeGame() {
@@ -62,13 +192,13 @@ function initializeGame() {
         updateLoadingStatus("Debug mode setup complete");
         
         // Get the canvas element and setup the game
-        canvas = document.getElementById('gameCanvas');
-        if (!canvas) {
+        window.canvas = document.getElementById('gameCanvas');
+        if (!window.canvas) {
             throw new Error("Canvas element not found");
         }
         
-        ctx = canvas.getContext('2d');
-        if (!ctx) {
+        window.ctx = window.canvas.getContext('2d');
+        if (!window.ctx) {
             throw new Error("Could not get 2D context from canvas");
         }
         
@@ -84,7 +214,7 @@ function initializeGame() {
         }
         
         // Make game state loading
-        gameState = "loading";
+        currentGameState = "loading";
         
         // Setup event listeners
         try {
@@ -105,7 +235,7 @@ function initializeGame() {
             
             try {
                 // Initialize the game
-                initGame();
+                initializeGameCore();
                 updateLoadingStatus("Game initialized");
                 
                 // Check for errors before proceeding
@@ -117,7 +247,7 @@ function initializeGame() {
                 // Hide loading screen
                 setTimeout(() => {
                     document.getElementById("loadingScreen").style.display = "none";
-                    gameState = "gameplay";
+                    currentGameState = "gameplay";
                     console.log("Game started successfully");
                 }, 1000);
             } catch (err) {
@@ -129,7 +259,7 @@ function initializeGame() {
             
             // Still try to initialize with fallbacks
             try {
-                initGame();
+                initializeGameCore();
                 updateLoadingStatus("Game initialized with fallback graphics");
                 
                 // Hide loading screen with a warning
@@ -138,7 +268,7 @@ function initializeGame() {
                         showErrorScreen();
                     } else {
                         document.getElementById("loadingScreen").style.display = "none";
-                        gameState = "gameplay";
+                        currentGameState = "gameplay";
                         alert("Some game assets could not be loaded. The game will use fallback graphics.");
                     }
                 }, 1000);
@@ -209,7 +339,7 @@ function updateLoadingText(text) {
 
 // Show error screen
 function showErrorScreen() {
-    gameState = "error";
+    currentGameState = "error";
     
     // Get loading screen
     const loadingScreen = document.getElementById("loadingScreen");
@@ -315,7 +445,7 @@ function setupEventListeners() {
     document.addEventListener('keyup', handleKeyUp);
     
     // Add click listener to canvas
-    canvas.addEventListener('click', handleCanvasClick);
+    window.canvas.addEventListener('click', handleCanvasClick);
     
     // Add window resize listener
     window.addEventListener('resize', handleResize);
@@ -328,22 +458,22 @@ function setupEventListeners() {
 
 // Handle keyboard down events
 function handleKeyDown(e) {
-    if (gameState === "error") return; // Don't process input in error state
+    if (currentGameState === "error") return; // Don't process input in error state
     
     // Store key state
-    keys[e.key] = true;
+    window.keys[e.key] = true;
     
     // Special key handling
     switch(e.key) {
         case "e":
         case "E":
-            if (gameState === "gameplay" && !inDialogMode) {
+            if (currentGameState === "gameplay" && !window.inDialogMode) {
                 handleInteraction();
             }
             break;
         case "i":
         case "I":
-            if (gameState === "gameplay") {
+            if (currentGameState === "gameplay") {
                 toggleInventory();
             }
             break;
@@ -360,14 +490,14 @@ function handleKeyDown(e) {
 // Handle keyboard up events
 function handleKeyUp(e) {
     // Reset key state
-    keys[e.key] = false;
+    window.keys[e.key] = false;
 }
 
 // Handle canvas click event
 function handleCanvasClick(e) {
-    if (gameState === "error") return; // Don't process input in error state
+    if (currentGameState === "error") return; // Don't process input in error state
     
-    const rect = canvas.getBoundingClientRect();
+    const rect = window.canvas.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
     
@@ -397,22 +527,22 @@ function centerGameContainer() {
 
 // Handle Escape key
 function handleEscapeKey() {
-    if (gameState === "error") {
+    if (currentGameState === "error") {
         window.location.reload();
         return;
     }
     
-    if (gameState === "working") {
+    if (currentGameState === "working") {
         if (typeof endWork === 'function') {
             endWork(false);
         }
-    } else if (gameState === "minigame") {
-        gameState = "gameplay";
-    } else if (inDialogMode) {
+    } else if (currentGameState === "minigame") {
+        currentGameState = "gameplay";
+    } else if (window.inDialogMode) {
         if (typeof closeDialog === 'function') {
             closeDialog();
         }
-    } else if (gameState === "gameplay") {
+    } else if (currentGameState === "gameplay") {
         togglePauseMenu();
     }
 }
@@ -455,8 +585,8 @@ function updateDebugInfo() {
         const debugPos = document.getElementById('debugPos');
         const debugState = document.getElementById('debugState');
         
-        if (debugFps && lastTime) {
-            debugFps.textContent = Math.round(1 / ((performance.now() - lastTime) / 1000) || 0);
+        if (debugFps && window.lastTime) {
+            debugFps.textContent = Math.round(1 / ((performance.now() - window.lastTime) / 1000) || 0);
         }
         
         if (debugPos && typeof player !== 'undefined') {
@@ -464,10 +594,10 @@ function updateDebugInfo() {
         }
         
         if (debugState) {
-            debugState.textContent = gameState;
+            debugState.textContent = currentGameState;
             // Change color based on state
-            debugState.style.color = gameState === 'error' ? '#ff5555' : 
-                                     gameState === 'loading' ? '#ffdd99' : 
+            debugState.style.color = currentGameState === 'error' ? '#ff5555' : 
+                                     currentGameState === 'loading' ? '#ffdd99' : 
                                      'white';
         }
     }
@@ -477,6 +607,29 @@ function updateDebugInfo() {
 function loadImageAssets() {
     return new Promise((resolve, reject) => {
         updateLoadingStatus("Starting image loading process");
+        
+        // If we already have images preloaded in imageObjects, use them
+        if (window.imageObjects && window.imageObjects.playerSprite) {
+            updateLoadingStatus("Using preloaded images from imageObjects");
+            
+            // Assign player sprite if it was preloaded
+            if (window.player && window.imageObjects.playerSprite && window.imageObjects.playerSprite.complete) {
+                window.player.spriteImg = window.imageObjects.playerSprite;
+                updateLoadingStatus("Player sprite assigned from preloaded images");
+                console.log("Player sprite loaded successfully");
+            }
+            
+            // Assign job building image if it was preloaded
+            if (window.jobBuilding && window.imageObjects.jobBuilding && window.imageObjects.jobBuilding.complete) {
+                window.jobBuilding.img = window.imageObjects.jobBuilding;
+                updateLoadingStatus("Job building image assigned from preloaded images");
+                console.log("Job building image loaded successfully");
+            }
+            
+            // Resolve immediately since we're using preloaded images
+            resolve();
+            return;
+        }
         
         // If there's an existing loading function, use it
         if (typeof loadImages === 'function') {
@@ -532,8 +685,14 @@ function loadImageAssets() {
                             resolve();
                         }
                     } else if (typeof IMAGES[key] === 'string') {
-                        const img = new Image();
+                        // Create image object if it doesn't exist
+                        if (!window.imageObjects[key]) {
+                            window.imageObjects[key] = new Image();
+                        }
+                        
+                        const img = window.imageObjects[key];
                         img.onload = function() {
+                            console.log(`Image ${key} loaded successfully!`);
                             loadedCount++;
                             if (loadedCount + errorCount >= imageKeys.length) {
                                 updateLoadingStatus("All images preloaded");
@@ -565,16 +724,44 @@ function loadImageAssets() {
 }
 
 // Initialize the game
-function initGame() {
+function initializeGameCore() {
     updateLoadingStatus("Initializing game core");
+    
+    // Check if we're already executing initGame to prevent infinite recursion
+    if (window.initGameExecuting) {
+        updateLoadingStatus("Preventing recursive initGame call");
+        recordError("Recursive initGame call detected and prevented");
+        return;
+    }
     
     // If the existing game.js file has an initGame function, call it
     if (typeof window.initGame === 'function') {
         try {
+            // Set flag to prevent recursion
+            window.initGameExecuting = true;
             updateLoadingStatus("Calling window.initGame()");
-            window.initGame();
+            
+            // Store reference to this function temporarily
+            const localInitGame = window.initGame;
+            
+            // Replace window.initGame temporarily to prevent recursion
+            window.initGame = function() {
+                console.warn("Prevented recursive initGame call");
+                return;
+            };
+            
+            // Call the stored reference
+            localInitGame();
+            
+            // Restore the original function
+            window.initGame = localInitGame;
+            
             updateLoadingStatus("window.initGame() completed successfully");
+            // Reset flag after successful execution
+            window.initGameExecuting = false;
         } catch (error) {
+            // Reset flag if there was an error
+            window.initGameExecuting = false;
             updateLoadingStatus("Error in window.initGame()");
             recordError("Error in game initialization: " + error.message);
             throw error;
@@ -586,7 +773,7 @@ function initGame() {
     }
     
     // Set game as initialized
-    gameInitialized = true;
+    window.gameInitialized = true;
     updateLoadingStatus("Game initialization completed");
 }
 
@@ -598,40 +785,100 @@ function setupBasicGame() {
     // Just enough to show something on screen
     
     // Draw a message on the canvas
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    ctx.fillStyle = 'white';
-    ctx.font = '24px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Game implementation not found!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
-    ctx.fillText('Please make sure game.js is properly loaded.', GAME_WIDTH / 2, GAME_HEIGHT / 2);
+    window.ctx.fillStyle = 'black';
+    window.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    window.ctx.fillStyle = 'white';
+    window.ctx.font = '24px Arial';
+    window.ctx.textAlign = 'center';
+    window.ctx.fillText('Game implementation not found!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+    window.ctx.fillText('Please make sure game.js is properly loaded.', GAME_WIDTH / 2, GAME_HEIGHT / 2);
     
     // Draw some instructions
-    ctx.font = '16px Arial';
-    ctx.fillText('Press F11 to toggle debug mode for more information', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40);
+    window.ctx.font = '16px Arial';
+    window.ctx.fillText('Press F11 to toggle debug mode for more information', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40);
     
     // Set up a basic animation
     function basicAnimation() {
         // Simple animation to show the canvas is working
         const time = Date.now() / 1000;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        window.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        window.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         
         // Draw a bouncing circle
         const x = GAME_WIDTH / 2 + Math.sin(time) * 100;
         const y = GAME_HEIGHT / 2 + Math.cos(time * 0.7) * 50;
         
-        ctx.beginPath();
-        ctx.arc(x, y, 20, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 153, 0, 0.7)';
-        ctx.fill();
+        window.ctx.beginPath();
+        window.ctx.arc(x, y, 20, 0, Math.PI * 2);
+        window.ctx.fillStyle = 'rgba(255, 153, 0, 0.7)';
+        window.ctx.fill();
         
         // Keep animating
-        animationFrameId = requestAnimationFrame(basicAnimation);
+        window.animationFrameId = requestAnimationFrame(basicAnimation);
     }
     
     // Start the basic animation
     basicAnimation();
+}
+
+// Main game loop
+function gameLoop(timestamp) {
+    try {
+        // Calculate FPS
+        if (window.lastTime > 0) {
+            const delta = timestamp - window.lastTime;
+            window.fps = 1000 / delta;
+        }
+        window.lastTime = timestamp;
+        
+        // Update with error handling
+        try {
+            if (typeof window.update === 'function') {
+                window.update(timestamp - window.lastTime);
+            } else if (typeof update === 'function') {
+                update(timestamp - window.lastTime);
+            } else {
+                // Fallback update function
+                fallbackUpdate(timestamp - window.lastTime);
+            }
+        } catch (updateError) {
+            console.error("Error during update:", updateError);
+            recordError("Game update error: " + updateError.message);
+        }
+        
+        // Draw with error handling
+        try {
+            if (typeof window.draw === 'function') {
+                window.draw();
+            } else if (typeof draw === 'function') {
+                draw();
+            } else {
+                // Fallback draw function
+                fallbackDraw();
+            }
+        } catch (drawError) {
+            console.error("Error during draw:", drawError);
+            recordError("Game rendering error: " + drawError.message);
+        }
+        
+        // Update debug info with error handling
+        try {
+            if (typeof updateDebugInfo === 'function') {
+                updateDebugInfo();
+            }
+        } catch (debugError) {
+            console.error("Error during debug info update:", debugError);
+        }
+        
+        // Continue the loop
+        window.animationFrameId = requestAnimationFrame(gameLoop);
+    } catch (error) {
+        console.error("Critical error in game loop:", error);
+        recordError("Critical game loop error: " + error.message);
+        
+        // Try to continue the game loop to avoid complete freezing
+        window.animationFrameId = requestAnimationFrame(gameLoop);
+    }
 }
 
 // Initialize when the window loads

@@ -3,332 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FULIFE - Gameplay</title>
+    <title>FULIFE - Play</title>
     <style>
-        /* General Styles */
         body {
-            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #1a1a1a;
+            font-family: Arial, sans-serif;
+            background-color: #222;
             color: white;
             overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
-        /* Game Container - existing styles from fulife.html */
         #game-container {
+            position: relative;
             width: 800px;
             height: 600px;
-            position: relative;
-            background-color: black;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
             margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
             overflow: hidden;
         }
         
-        /* Game Canvas */
-        #gameCanvas {
+        canvas {
+            background-color: #000;
             display: block;
-            width: 100%;
-            height: 100%;
         }
         
-        /* Dialog Box and Inventory Styles */
-        .dialog {
+        #loadingScreen {
             position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 700px;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            border-radius: 10px;
-            padding: 15px;
-            display: none;
-        }
-        
-        #npcName {
-            margin-top: 0;
-            color: #ff9900;
-        }
-        
-        #dialogText {
-            margin-bottom: 15px;
-        }
-        
-        .btn {
-            background-color: #444;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            margin-right: 10px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        
-        .btn:hover {
-            background-color: #666;
-        }
-        
-        #inventoryContainer {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 600px;
-            background-color: rgba(0, 0, 0, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            display: none;
-            flex-direction: column;
-        }
-        
-        #inventorySlots {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .inventory-slot {
-            width: 100%;
-            aspect-ratio: 1;
-            background-color: #333;
-            border-radius: 5px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        
-        .inventory-slot:hover {
-            background-color: #444;
-        }
-        
-        .item-icon {
-            font-size: 2rem;
-            margin-bottom: 5px;
-        }
-        
-        .item-name {
-            font-size: 0.8rem;
-            text-align: center;
-        }
-        
-        /* Stats Panel */
-        .stats-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: rgba(41, 34, 21, 0.85);
-            border: 2px solid #6d5c33;
-            border-radius: 5px;
-            padding: 10px;
-            color: #ffebc4;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            min-width: 150px;
-            z-index: 10;
-        }
-        
-        .stats-content {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-weight: bold;
-            color: #ffdd99;
-        }
-        
-        /* Inventory container */
-        .stats-container {
-            margin: 15px 0;
-            border-top: 1px solid #444;
-            padding-top: 15px;
-        }
-        
-        .stat {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-
-        /* Mobile Controls */
-        #mobileControls {
-            position: absolute;
-            bottom: 20px;
-            left: 0;
-            width: 100%;
-            display: none;
-        }
-        
-        .mobile-buttons {
-            display: flex;
-            justify-content: space-between;
-            padding: 0 20px;
-        }
-        
-        .direction-pad {
-            display: grid;
-            grid-template-columns: repeat(3, 40px);
-            grid-template-rows: repeat(3, 40px);
-            gap: 5px;
-        }
-        
-        .mobile-btn {
-            width: 40px;
-            height: 40px;
-            background-color: rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border: none;
-            color: white;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        /* Loading indicator */
-        .loading {
-            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.8);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 100;
         }
         
         .loading-text {
-            color: white;
             font-size: 24px;
+            margin-bottom: 20px;
         }
-
-        /* Debug panel */
-        .debug-panel {
+        
+        .loading-bar-container {
+            width: 50%;
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .loading-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50;
+            transition: width 0.3s;
+        }
+        
+        #debugPanel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
+        
+        .debug-line {
+            margin: 4px 0;
+        }
+        
+        .debug-value {
+            color: #4CAF50;
+        }
+        
+        #dialogContainer {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 2px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            z-index: 50;
+        }
+        
+        #inventoryPanel {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            background-color: rgba(0, 0, 0, 0.9);
+            border: 2px solid #555;
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 60;
+        }
+        
+        .inventory-slots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .inventory-slot {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid #444;
+            border-radius: 5px;
+        }
+        
+        #mobileControls {
             position: absolute;
             bottom: 10px;
             left: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
+            right: 10px;
             display: none;
         }
     </style>
 </head>
 <body>
-    <!-- Main Game Container -->
     <div id="game-container">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         
-        <!-- Dialog Box -->
-        <div id="dialogBox" class="dialog" style="display: none;">
-            <h3 id="npcName">NPC Name</h3>
-            <div id="dialogText">Dialog text goes here...</div>
-            <div id="dialogOptions"></div>
-            <button id="closeDialog" class="btn" style="display: none;" onclick="closeDialog()">Close</button>
+        <div id="loadingScreen" class="loading-screen">
+            <div class="loading-text">Loading game...</div>
+            <div class="loading-bar-container">
+                <div id="loadingBar" class="loading-bar"></div>
+            </div>
         </div>
         
-        <!-- Inventory Container -->
-        <div id="inventoryContainer" style="display: none;">
-            <h2>Inventory</h2>
-            <div id="inventorySlots">
-                <!-- Inventory slots will be added dynamically -->
-            </div>
-            <div class="stats-container">
-                <div class="stat">
-                    <span class="stat-label">Education:</span>
-                    <span class="stat-value" id="stat-education">10</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Career:</span>
-                    <span class="stat-value" id="stat-career">5</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Happiness:</span>
-                    <span class="stat-value" id="stat-happiness">50</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Health:</span>
-                    <span class="stat-value" id="stat-health">100</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Money:</span>
-                    <span class="stat-value" id="stat-money">$1000</span>
-                </div>
-            </div>
-            <button class="btn" onclick="toggleInventory()">Close</button>
-        </div>
-
-        <!-- Debug panel -->
-        <div id="debugPanel" class="debug-panel">
-            <div>FPS: <span id="debugFps">0</span></div>
-            <div>Position: <span id="debugPos">0,0</span></div>
-            <div>State: <span id="debugState">gameplay</span></div>
+        <div id="dialogContainer"></div>
+        <div id="inventoryPanel"></div>
+        <div id="mobileControls"></div>
+        
+        <div id="debugPanel">
+            <div class="debug-line">FPS: <span id="debugFps" class="debug-value">0</span></div>
+            <div class="debug-line">Position: <span id="debugPos" class="debug-value">0,0</span></div>
+            <div class="debug-line">State: <span id="debugState" class="debug-value">loading</span></div>
         </div>
     </div>
-
-    <!-- Mobile Controls -->
-    <div id="mobileControls" style="display: none;">
-        <div class="mobile-buttons">
-            <div class="direction-pad">
-                <div></div>
-                <button class="mobile-btn" id="upBtn">↑</button>
-                <div></div>
-                <button class="mobile-btn" id="leftBtn">←</button>
-                <div></div>
-                <button class="mobile-btn" id="rightBtn">→</button>
-                <div></div>
-                <button class="mobile-btn" id="downBtn">↓</button>
-                <div></div>
-            </div>
-            
-            <div class="action-buttons">
-                <button class="mobile-btn" id="actionBtn">E</button>
-                <button class="mobile-btn" id="inventoryBtn">I</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading indicator -->
-    <div id="loadingScreen" class="loading">
-        <div class="loading-text">Loading Game...</div>
-    </div>
-
-    <!-- Game Scripts -->
+    
+    <!-- Load game files in correct order -->
+    <script src="init.js"></script>
     <script src="images.js"></script>
     <script src="cutscene-images.js"></script>
     <script src="logic-gates.js"></script>
     <script src="game.js"></script>
     <script src="game-page.js"></script>
-    <script src="test-init.js"></script>
 </body>
 </html> 

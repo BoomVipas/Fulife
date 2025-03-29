@@ -414,14 +414,18 @@ function basicInitGame() {
             throw new Error("Could not get 2D context from canvas");
         }
         
+        // Store in window object to avoid conflicts
+        window.canvas = canvas;
+        window.ctx = ctx;
+        
         // Hide loading screen if it exists
         const loadingScreen = document.getElementById('loadingScreen');
         if (loadingScreen) {
             loadingScreen.style.display = 'none';
         }
         
-        // Create dummy player
-        const player = {
+        // Create dummy player using global variable
+        window.player = {
             x: canvas.width / 2,
             y: canvas.height / 2,
             width: 40,
@@ -437,14 +441,19 @@ function basicInitGame() {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             // Draw player
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x - player.width / 2, player.y - player.height / 2, player.width, player.height);
+            ctx.fillStyle = window.player.color;
+            ctx.fillRect(
+                window.player.x - window.player.width / 2, 
+                window.player.y - window.player.height / 2, 
+                window.player.width, 
+                window.player.height
+            );
             
             // Draw face
             ctx.fillStyle = "#000";
-            ctx.fillRect(player.x - 10, player.y - 10, 5, 5); // left eye
-            ctx.fillRect(player.x + 5, player.y - 10, 5, 5);  // right eye
-            ctx.fillRect(player.x - 10, player.y + 5, 20, 5);  // mouth
+            ctx.fillRect(window.player.x - 10, window.player.y - 10, 5, 5); // left eye
+            ctx.fillRect(window.player.x + 5, window.player.y - 10, 5, 5);  // right eye
+            ctx.fillRect(window.player.x - 10, window.player.y + 5, 20, 5);  // mouth
             
             // Draw diagnostic info
             ctx.fillStyle = "#fff";
@@ -453,7 +462,7 @@ function basicInitGame() {
             ctx.fillText("Original game loading failed - check console (F12) for details", 20, 50);
             
             // Continue animation
-            requestAnimationFrame(gameLoop);
+            window.animationFrameId = requestAnimationFrame(gameLoop);
         }
         
         // Start game loop
