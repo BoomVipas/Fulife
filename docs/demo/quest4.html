@@ -122,9 +122,30 @@
       50% { opacity: 1; }
       100% { opacity: 0.3; }
     }
+
+    #book-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 48px;
+      height: 48px;
+      z-index: 20;
+      cursor: pointer;
+    }
+
+    #book-btn img {
+      width: 75%;
+      height: 75%;
+      image-rendering: pixelated;
+    }
   </style>
 </head>
 <body>
+  <!-- Book Button -->
+  <div id="book-btn" title="Open Book" onclick="goToBook()">
+    <img src="../asset/book_btn.png" alt="Book Button" />
+  </div>
+
   <canvas id="gameCanvas"></canvas>
 
   <!-- 🔔 POPUP BOX -->
@@ -624,6 +645,11 @@
     const keys = {};
     let frame = 1;
     let frameDelay = 0;
+
+    function goToBook() {
+      // Navigate to the book page
+      window.location.href = "myhouse.html?page=book";
+    }
 
     startGameWhenReady();
   </script>

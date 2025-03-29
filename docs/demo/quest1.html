@@ -169,9 +169,30 @@
       #popup button:hover {
         background-color: #f9d67a;
       }
+
+      #book-btn {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
+        z-index: 20;
+        cursor: pointer;
+      }
+
+      #book-btn img {
+        width: 75%;
+        height: 75%;
+        image-rendering: pixelated;
+      }
     </style>
   </head>
   <body>
+    <!-- Book Button -->
+    <div id="book-btn" title="Open Book" onclick="goToBook()">
+      <img src="../asset/book_btn.png" alt="Book Button" />
+    </div>
+
     <!-- Top Bar -->
     <div class="top-icons">
       <div class="sound-wrapper" onclick="toggleMusic(event)">
@@ -665,6 +686,11 @@
         } else {
           setTimeout(startGameWhenReady, 100);
         }
+      }
+
+      function goToBook() {
+        // Navigate to the book page
+        window.location.href = "myhouse.html?page=book";
       }
 
       startGameWhenReady();
