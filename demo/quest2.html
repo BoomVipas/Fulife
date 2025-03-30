@@ -96,12 +96,12 @@
     }
 
     #dialog-portrait {
-      position: absolute;
-      right: 20px;
-      top: 40px;
-      width: 80px;
-      height: 80px;
-    }
+        position: absolute;
+        right: 20px;
+        top: 16px;
+        width: 130px;
+        height: 130px;
+      }
 
     #dialog-name {
       position: absolute;
@@ -116,6 +116,22 @@
       color: #964b00;
       animation: blink 1s infinite;
     }
+
+    #book-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  z-index: 20;
+  cursor: pointer;
+}
+
+#book-btn img {
+  width: 75%;
+  height: 75%;
+  image-rendering: pixelated;
+}
 
     @keyframes blink {
       0% { opacity: 0.3; }
@@ -139,7 +155,7 @@
     <div id="dialog-content">
       Welcome to FULIFE! I'm the CEO. Press any key to continue.
     </div>
-    <img id="dialog-portrait" src="../asset/images/CEO_face.svg" alt="CEO Portrait">
+    <img id="dialog-portrait" src="../../asset/images/CEO_big.png" alt="CEO Portrait">
     <div id="dialog-name">CEO</div>
     <div id="next-hint">Click to continue</div>
   </div>
@@ -148,6 +164,10 @@
     Movement: Arrow Keys or WASD<br>
     Toggle Collision View: C<br>
     Interact: E
+  </div>
+
+  <div id="book-btn" title="Open Book" onclick="goToBook()">
+    <img src="../asset/book_btn.png" alt="Book Button" />
   </div>
 
   <script>
@@ -242,7 +262,7 @@
     let player = {
       x: 10,
       y: 70,
-      speed: 2,
+      speed: 1,
       direction: "right",
       isMoving: false,
       width: PLAYER_HITBOX_WIDTH,
@@ -253,17 +273,17 @@
     const dialogSequences = [
       {
         text: "Welcome to FULIFE! I'm the CEO of this company.",
-        portrait: "../asset/images/CEO_face.svg",
+        portrait: "../asset/images/CEO_big.png",
         name: "CEO"
       },
       {
         text: "We are looking for talented individuals like you to join our team.",
-        portrait: "../asset/images/CEO_face.svg",
+        portrait: "../asset/images/CEO_big.png",
         name: "CEO"
       },
       {
         text: "Feel free to explore the building and come back to me if you have any questions.",
-        portrait: "../asset/images/CEO_face.svg",
+        portrait: "../asset/images/CEO_big.png",
         name: "CEO"
       }
     ];
@@ -634,6 +654,13 @@
     const keys = {};
     let frame = 1;
     let frameDelay = 0;
+
+    function goToBook() {
+  const params = new URLSearchParams(window.location.search);
+  const name = params.get("name") || "";
+  const char = params.get("char") || "main";
+  window.location.href = `book.html?name=${encodeURIComponent(name)}&char=${char}`;
+}
 
     startGameWhenReady();
   </script>

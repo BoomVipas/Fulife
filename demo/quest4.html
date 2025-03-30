@@ -64,6 +64,22 @@
       display: none; /* Hide the controls info */
     }
 
+    #book-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  z-index: 20;
+  cursor: pointer;
+}
+
+#book-btn img {
+  width: 75%;
+  height: 75%;
+  image-rendering: pixelated;
+}
+
     /* Dialog box styles */
     #dialog-box {
       position: fixed;
@@ -96,12 +112,12 @@
     }
 
     #dialog-portrait {
-      position: absolute;
-      right: 20px;
-      top: 40px;
-      width: 80px;
-      height: 80px;
-    }
+        position: absolute;
+        right: 20px;
+        top: 16px;
+        width: 130px;
+        height: 130px;
+      }
 
     #dialog-name {
       position: absolute;
@@ -139,9 +155,13 @@
     <div id="dialog-content">
       Welcome to FULIFE! I'm the CEO. Press any key to continue.
     </div>
-    <img id="dialog-portrait" src="../asset/images/CEO_face.svg" alt="CEO Portrait">
+    <img id="dialog-portrait" src="../asset/images/CEO_big.png" alt="CEO Portrait">
     <div id="dialog-name">CEO</div>
     <div id="next-hint">Click to continue</div>
+  </div>
+
+  <div id="book-btn" title="Open Book" onclick="goToBook()">
+    <img src="../asset/book_btn.png" alt="Book Button" />
   </div>
 
   <div id="controls-info">
@@ -240,7 +260,7 @@
     let player = {
       x: 460, // Position player in front of CEO
       y: 460, // A bit below the CEO
-      speed: 2,
+      speed: 1,
       direction: "up", // Face toward the CEO
       isMoving: false,
       width: PLAYER_HITBOX_WIDTH,
@@ -251,17 +271,17 @@
     const dialogSequences = [
       {
         text: "Welcome to FULIFE! I'm the CEO of this company.",
-        portrait: "../asset/images/CEO_face.svg",
+        portrait: "../asset/images/CEO_big.png",
         name: "CEO"
       },
       {
         text: "We are looking for talented individuals like you to join our team.",
-        portrait: "../asset/images/CEO_face.svg",
+        portrait: "../asset/images/CEO_big.png",
         name: "CEO"
       },
       {
         text: "Feel free to explore the building and come back to me if you have any questions.",
-        portrait: "../asset/images/CEO_face.svg",
+        portrait: "../asset/images/CEO_big.png",
         name: "CEO"
       }
     ];
@@ -619,11 +639,18 @@
     playerSprite.src = "../asset/images/player_sprite.png"; // Updated path to your player sprite
 
     const npcSprite = new Image();
-    npcSprite.src = "../asset/images/CEO_fullbody.png"; // CEO sprite
+    npcSprite.src =  "../asset/images/CEO_fullbody.png";
 
     const keys = {};
     let frame = 1;
     let frameDelay = 0;
+
+    function goToBook() {
+  const params = new URLSearchParams(window.location.search);
+  const name = params.get("name") || "";
+  const char = params.get("char") || "main";
+  window.location.href = `book.html?name=${encodeURIComponent(name)}&char=${char}`;
+}
 
     startGameWhenReady();
   </script>

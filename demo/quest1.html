@@ -57,9 +57,9 @@
       #dialog-portrait {
         position: absolute;
         right: 20px;
-        top: 40px;
-        width: 80px;
-        height: 80px;
+        top: 17px;
+        width: 100px;
+        height: 125px;
       }
 
       #dialog-name {
@@ -169,6 +169,22 @@
       #popup button:hover {
         background-color: #f9d67a;
       }
+
+      #book-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  z-index: 20;
+  cursor: pointer;
+}
+
+#book-btn img {
+  width: 75%;
+  height: 75%;
+  image-rendering: pixelated;
+}
     </style>
   </head>
   <body>
@@ -204,7 +220,7 @@
       </div>
       <img
         id="dialog-portrait"
-        src="../asset/quest/engineer_closeup.svg"
+        src="../asset/book/engineer.png"
         alt="NPC Portrait"
       />
       <div id="dialog-name"></div>
@@ -216,6 +232,10 @@
       <p>Go to next the town?</p>
       <button onclick="goToNextArea()">Yes</button>
       <button onclick="closePopup()">No</button>
+    </div>
+
+    <div id="book-btn" title="Open Book" onclick="goToBook()">
+      <img src="../asset/book_btn.png" alt="Book Button" />
     </div>
 
     <!-- Background Music -->
@@ -319,7 +339,7 @@
       let player = {
         x: worldWidth * 0.7,
         y: worldHeight * 0.35,
-        speed: 2,
+        speed: 1,
         direction: "down",
         isMoving: false,
       };
@@ -327,7 +347,7 @@
       // Player collision box dimensions (relative to player position)
       const playerCollision = {
         offsetX: -10, // offset from player.x
-        offsetY: -15,  // offset from player.y
+        offsetY: 10,  // offset from player.y
         width: 20,    // width of collision box
         height: 20    // height of collision box
       };
@@ -336,12 +356,12 @@
       const dialogSequences = [
         {
           text: "Hello there! I'm the engineer for this area.",
-          portrait: "../asset/quest/engineer_closeup.svg",
+          portrait: "../asset/book/engineer.png",
           name: "Engineer",
         },
         {
           text: "I just found out the CEO wants to meet with you. You should go to town to see him!",
-          portrait: "../asset/quest/engineer_closeup.svg",
+          portrait: "../asset/book/engineer.png",
           name: "Engineer",
         },
       ];
@@ -772,6 +792,13 @@
           setTimeout(startGameWhenReady, 100);
         }
       }
+
+      function goToBook() {
+  const params = new URLSearchParams(window.location.search);
+  const name = params.get("name") || "";
+  const char = params.get("char") || "main";
+  window.location.href = `book.html?name=${encodeURIComponent(name)}&char=${char}`;
+}
 
       startGameWhenReady();
     </script>
