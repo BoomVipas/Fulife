@@ -41,7 +41,7 @@
         align-items: center;
         justify-content: center;
         margin-bottom: 20px;
-        margin-top: 30px;
+        margin-top: 40px;
       }
 
       .title {
@@ -167,7 +167,6 @@
       .gate-image {
         width: 80px;
         height: 60px;
-
         margin-bottom: 10px;
       }
 
@@ -346,7 +345,6 @@
               <div class="gate-toggle">
                 <div class="gate-toggle-state">
                   <div class="gate-name" id="gate-C-name">AND Gate</div>
-                  <!-- <div class="gate-value" id="gate-C-value">1</div> -->
                   <button class="toggle-btn" onclick="toggleGate('C')">
                     <img
                       src="../asset/quest/andGate.png"
@@ -384,7 +382,7 @@
       const dialogContent = document.getElementById("dialog-content");
       const helpBtn = document.getElementById("help-btn");
       const submitBtn = document.getElementById("submit-btn");
-      const circuitImage = document.querySelector(".circuit-image");
+      const circuitImage = document.getElementById("circuit-image");
 
       // Dialog state
       let isDialogActive = false;
@@ -418,21 +416,18 @@
       function toggleGate(position) {
         const gate = gates[position];
         const gateName = document.getElementById(`gate-${position}-name`);
-        const gateValue = document.getElementById(`gate-${position}-value`);
         const gateImg = document.getElementById(`gate-${position}-img`);
 
         if (gate.type === "AND") {
           gate.type = "OR";
           gate.value = "0";
           gateName.textContent = "OR Gate";
-          gateValue.textContent = "0";
           gateImg.src = "../asset/quest/orGate.png";
         } else {
           gate.type = "AND";
           gate.value = "1";
           gateName.textContent = "AND Gate";
-          gateValue.textContent = "1";
-          gateImg.src = "../asset/quest/orGate.png";
+          gateImg.src = "../asset/quest/andGate.png";
         }
       }
 
@@ -507,10 +502,8 @@
             // Success message before proceeding
             setTimeout(() => {
               // Redirect to next quest or completion page
-              window.location.href = `quest4.html?name=${encodeURIComponent(playerName)}`;
-              alert(
-                "Congratulations! You've unlocked the engineering workshop door!"
-              );
+              alert("Congratulations! You've unlocked the engineering workshop door!");
+              window.location.href = `quest5.html?name=${encodeURIComponent(playerName)}`;
             }, 1000);
           };
 
