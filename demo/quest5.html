@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FULIFE - Logic Gates Quest 4</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background-color: #f9e9c8;
+        font-family: "Press Start 2P", cursive;
+        overflow-y: scroll;
+      }
+
+      .main-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 50px;
+        padding: 0px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      /* Header Section */
+      .title-section {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        margin-top: 30px;
+      }
+
+      .title {
+        color: black;
+        font-size: 36px;
+        font-weight: 500;
+        padding: 10px;
+      }
+
+      .subtitle {
+        color: black;
+        font-size: 20px;
+        font-weight: 700;
+        margin-left: 20px;
+        font-family: sans-serif;
+      }
+
+      /* Content Layout */
+      .content-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 30px;
+        padding: 10px;
+        gap: 40px;
+      }
+
+      /* Circuit Panel */
+      .circuit-panel {
+        flex: 3;
+        position: relative;
+        width: 400px;
+      }
+      .circuit-board {
+        width: 100%;
+      }
+
+      .circuit-image {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .output-light.on {
+        background-color: #5bcb5b;
+        box-shadow: 0 0 15px #5bcb5b;
+      }
+
+      /* Instructions Panel */
+      .instructions-panel {
+        background-color: #ffcc79;
+        border: 3px solid #ba5109;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+      }
+
+      .instructions-title {
+        font-size: 18px;
+        margin-bottom: 10px;
+        text-align: center;
+        
+      }
+
+      .instructions-text {
+        font-size: 12px;
+        line-height: 1.5;
+        font-family: sans-serif;
+        font-weight: 700;
+      }
+
+      /* Controls Panel */
+      .controls-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-left: 20px;
+      }
+
+      /* Gate Toggles */
+      .gate-toggles {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .gate-toggle {
+        display: flex;
+        flex-direction: row;
+        gap:200px;
+        align-items: center;
+        background-color: #ffffff;
+        border: 3px solid #ba5109;
+        border-radius: 10px;
+        padding: 15px;
+      }
+
+      .gate-toggle-label {
+        font-size: 24px;
+        margin-right: 15px;
+        min-width: 30px;
+      }
+
+      .gate-toggle-state {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .gate-name {
+        font-size: 14px;
+        margin-bottom: 5px;
+      }
+
+      .gate-value {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .gate-image {
+        width: 80px;
+        height: 60px;
+
+        margin-bottom: 10px;
+      }
+
+      .toggle-btn {
+        background-color: #ba5109;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 15px;
+        font-family: "Press Start 2P", cursive;
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      .toggle-btn:hover {
+        background-color: #8b3e07;
+      }
+
+      /* Bottom Buttons */
+      .buttons-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: auto;
+        padding-top: 20px;
+        gap: 15px;
+      }
+
+      .action-btn {
+        padding: 15px 30px;
+        background-color: #ba5109;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-family: "Press Start 2P", cursive;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      .action-btn:hover {
+        background-color: #8b3e07;
+      }
+
+      /* Dialog box styling */
+      #dialog-box {
+        position: fixed;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ffcc79;
+        color: black;
+        padding: 20px 30px;
+        border-radius: 20px;
+        border: 4px solid #964b00;
+        font-family: "Press Start 2P", monospace;
+        font-size: 14px;
+        text-align: left;
+        z-index: 10;
+        display: none;
+        width: 70%;
+        max-width: 600px;
+        min-width: 400px;
+        box-shadow: 4px 4px 0 #000;
+      }
+
+      #dialog-content {
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
+
+      #next-hint {
+        text-align: right;
+        color: #964b00;
+        animation: blink 1s infinite;
+      }
+
+      @keyframes blink {
+        0% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.3;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main-container">
+      <!-- Title Section -->
+      <div class="title-section">
+        <h1 class="title">DOOR</h1>
+        <h2 class="subtitle">
+          #1 Make the output 1 using both AND & OR gates to unlock the
+          engineering workshop door
+        </h2>
+      </div>
+
+      <!-- Content Container -->
+      <div class="content-container">
+        <!-- Circuit Panel -->
+        <div class="circuit-panel">
+          <!-- Instructions Panel -->
+          <div class="instructions-panel">
+            <h3 class="instructions-title">HOW TO PLAY</h3>
+            <p class="instructions-text">
+              1. Toggle the logic gates using the buttons on the right<br />
+              2. Set the correct configuration to make the output light turn
+              on<br />
+              3. Submit your answer when ready<br />
+            </p>
+          </div>
+
+          <div class="circuit-board">
+            <img
+              src="../asset/quest/circuitSuperRed.png"
+              alt="Circuit Board"
+              class="circuit-image"
+              id="circuit-image"
+            />
+            <div class="output-light" id="output-light"></div>
+          </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+          <div class="gate-toggles">
+            <!-- Gate A Toggle -->
+            <div
+              style="display: flex; flex-direction: row; align-items: center"
+            >
+              <div class="gate-toggle-label">A</div>
+              <!-- Moved outside -->
+              <div class="gate-toggle">
+                <div class="gate-toggle-state">
+                  <div class="gate-name" id="gate-A-name">AND Gate</div>
+                  <button class="toggle-btn" onclick="toggleGate('A')">
+                    <img
+                      src="../asset/quest/andGate.png"
+                      alt="Gate A"
+                      class="gate-image"
+                      id="gate-A-img"
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gate B Toggle -->
+            <div
+              style="display: flex; flex-direction: row; align-items: center"
+            >
+              <div class="gate-toggle-label">B</div>
+              <!-- Moved outside -->
+              <div class="gate-toggle">
+                <div class="gate-toggle-state">
+                  <div class="gate-name" id="gate-B-name">AND Gate</div>
+                  <button class="toggle-btn" onclick="toggleGate('B')">
+                    <img
+                      src="../asset/quest/andGate.png"
+                      alt="Gate B"
+                      class="gate-image"
+                      id="gate-B-img"
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gate C Toggle -->
+            <div
+              style="display: flex; flex-direction: row; align-items: center"
+            >
+              <div class="gate-toggle-label">C</div>
+              <div class="gate-toggle">
+                <div class="gate-toggle-state">
+                  <div class="gate-name" id="gate-C-name">AND Gate</div>
+                  <!-- <div class="gate-value" id="gate-C-value">1</div> -->
+                  <button class="toggle-btn" onclick="toggleGate('C')">
+                    <img
+                      src="../asset/quest/andGate.png"
+                      alt="Gate C"
+                      class="gate-image"
+                      id="gate-C-img"
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Buttons -->
+          <div class="buttons-container">
+            <button class="action-btn" id="help-btn">Help</button>
+            <button class="action-btn" id="submit-btn">Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dialog Box -->
+    <div id="dialog-box">
+      <div id="dialog-content">
+        Click on the toggle buttons to switch between AND (1) and OR (0) gates.
+      </div>
+      <div id="next-hint">Click to continue</div>
+    </div>
+
+    <script>
+      // Elements
+      const outputLight = document.getElementById("output-light");
+      const dialogBox = document.getElementById("dialog-box");
+      const dialogContent = document.getElementById("dialog-content");
+      const helpBtn = document.getElementById("help-btn");
+      const submitBtn = document.getElementById("submit-btn");
+      const circuitImage = document.querySelector(".circuit-image");
+
+      // Dialog state
+      let isDialogActive = false;
+      let currentDialog = 0;
+
+      // Help dialog sequences
+      const helpDialogSequences = [
+        {
+          text: "Click on the toggle buttons to switch between AND (1) and OR (0) gates.",
+        },
+        {
+          text: "Remember: AND gates need all inputs to be ON (1) to produce an ON output.",
+        },
+        {
+          text: "OR gates need at least one input to be ON (1) to produce an ON output.",
+        },
+        {
+          text: "Hint: The solution requires position A to be OR (0), position B to be OR (0), and position C to be AND (1).",
+          final: true,
+        },
+      ];
+
+      // Circuit state
+      let gates = {
+        A: { type: "AND", value: "1" },
+        B: { type: "AND", value: "1" },
+        C: { type: "AND", value: "1" },
+      };
+
+      // Toggle gate type
+      function toggleGate(position) {
+        const gate = gates[position];
+        const gateName = document.getElementById(`gate-${position}-name`);
+        const gateValue = document.getElementById(`gate-${position}-value`);
+        const gateImg = document.getElementById(`gate-${position}-img`);
+
+        if (gate.type === "AND") {
+          gate.type = "OR";
+          gate.value = "0";
+          gateName.textContent = "OR Gate";
+          gateValue.textContent = "0";
+          gateImg.src = "../asset/quest/orGate.png";
+        } else {
+          gate.type = "AND";
+          gate.value = "1";
+          gateName.textContent = "AND Gate";
+          gateValue.textContent = "1";
+          gateImg.src = "../asset/quest/orGate.png";
+        }
+      }
+
+      // Check if circuit is correct
+      function checkCircuit() {
+        // The correct solution is A=OR (0), B=OR (0), C=AND (1)
+        return (
+          gates.A.value === "0" &&
+          gates.B.value === "0" &&
+          gates.C.value === "1"
+        );
+      }
+
+      // Event Listeners
+      helpBtn.addEventListener("click", showHelp);
+      submitBtn.addEventListener("click", submitAnswer);
+
+      // Show help dialog
+      function showHelp() {
+        isDialogActive = true;
+        currentDialog = 0;
+        showDialog(helpDialogSequences[currentDialog]);
+
+        // Add click event to close dialog
+        dialogBox.addEventListener("click", advanceDialog);
+      }
+
+      // Show dialog
+      function showDialog(dialog) {
+        dialogContent.textContent = dialog.text;
+        dialogBox.style.display = "block";
+      }
+
+      // Advance to next dialog
+      function advanceDialog() {
+        currentDialog++;
+
+        if (currentDialog >= helpDialogSequences.length) {
+          // End of dialog
+          dialogBox.style.display = "none";
+          isDialogActive = false;
+          dialogBox.removeEventListener("click", advanceDialog);
+        } else {
+          // Show next dialog
+          showDialog(helpDialogSequences[currentDialog]);
+        }
+      }
+
+      // Submit answer
+      function submitAnswer() {
+        if (checkCircuit()) {
+          // Success!
+          outputLight.classList.add("on");
+
+          // Change the circuit image to green gate
+          circuitImage.src = "../asset/quest/circuitGreen1.png";
+
+          dialogContent.textContent =
+            "Great job! You've successfully configured the logic gates!";
+          dialogBox.style.display = "block";
+
+          // Add event listener to close dialog and proceed
+          const proceedToNext = () => {
+            dialogBox.style.display = "none";
+            isDialogActive = false;
+            dialogBox.removeEventListener("click", proceedToNext);
+
+            // Get player name from URL if available
+            const urlParams = new URLSearchParams(window.location.search);
+            const playerName = urlParams.get("name") || "Player";
+
+            // Success message before proceeding
+            setTimeout(() => {
+              // Redirect to next quest or completion page
+              window.location.href = `quest4.html?name=${encodeURIComponent(playerName)}`;
+              alert(
+                "Congratulations! You've unlocked the engineering workshop door!"
+              );
+            }, 1000);
+          };
+
+          dialogBox.addEventListener("click", proceedToNext);
+        } else {
+          // Failure
+          dialogContent.textContent = "That's not quite right. Try again!";
+          dialogBox.style.display = "block";
+
+          // Add event listener to close dialog
+          const tryAgain = () => {
+            dialogBox.style.display = "none";
+            isDialogActive = false;
+            dialogBox.removeEventListener("click", tryAgain);
+          };
+
+          dialogBox.addEventListener("click", tryAgain);
+        }
+      }
+    </script>
+  </body>
+</html>
