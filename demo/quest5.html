@@ -104,7 +104,6 @@
         font-size: 18px;
         margin-bottom: 10px;
         text-align: center;
-        
       }
 
       .instructions-text {
@@ -132,7 +131,7 @@
       .gate-toggle {
         display: flex;
         flex-direction: row;
-        gap:200px;
+        gap: 200px;
         align-items: center;
         background-color: #ffffff;
         border: 3px solid #ba5109;
@@ -502,8 +501,12 @@
             // Success message before proceeding
             setTimeout(() => {
               // Redirect to next quest or completion page
-              alert("Congratulations! You've unlocked the engineering workshop door!");
-              window.location.href = `quest5.html?name=${encodeURIComponent(playerName)}`;
+              alert(
+                "Congratulations! You've unlocked the engineering workshop door!"
+              );
+              window.location.href = `quest4.html?name=${encodeURIComponent(
+                playerName
+              )}`;
             }, 1000);
           };
 
